@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  aurora-api:
+    image: BOHAOYUAN/aurora-api:latest
+    container_name: aurora-api
+    restart: always
+    ports:
+      - "8000:80"
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=aurora-db
+      - DB_PORT=3306
+      - DB_DATABASE=aurora
+      - DB_USERNAME=aurora_user
+      - DB_PASSWORD=aurora_pass_secure
+      - REDIS_HOST=aurora-redis
+    depends_on:
+      - aurora-db
+      - aurora-redis
+
+  aurora-db:
+    image: mysql:8.0
+    container_name: aurora-db
+    restart: always
+    environment:
+      - MYSQL_DATABASE=aurora
+      - MYSQL_USER=aurora_user
+      - MYSQL_PASSWORD=aurora_pass_secure
+      - MYSQL_ROOT_PASSWORD=root_pass_secure
+    volumes:
+      - db_data:/var/lib/mysql
+
+  aurora-redis:
+    image: redis:7.0-alpine
+    container_name: aurora-redis
+    restart: always
+    volumes:
+      - redis_data:/data
+
+volumes:
+  db_data:
+  redis_data:
