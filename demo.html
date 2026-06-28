@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumière Digital Twin Command Center v4.5 - 电影级先锋版</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- ES Module Import Map - 解决依赖问题的关键 -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    
+    <style>
+        /* ==================== Lumière Airport v4.5 - 电影级先锋版 ==================== */
+        :root {
+            --bg-primary: #000814;
+            --bg-secondary: #001428;
+            --bg-card: rgba(0, 20, 40, 0.8);
+            --glass-bg: rgba(0, 20, 40, 0.6);
+            --glass-border: rgba(0, 255, 255, 0.3);
+            --border-glow: #00ffff;
+            --text-primary: #e0f7ff;
+            --text-secondary: #6ec8e8;
+            --accent-cyan: #00ffff;
+            --accent-blue: #0088ff;
+            --accent-green: #00ff88;
+            --accent-orange: #ff9500;
+            --accent-red: #ff3366;
+            --accent-purple: #9966ff;
+            --glow-cyan: 0 0 20px rgba(0, 255, 255, 0.5), 0 0 40px rgba(0, 255, 255, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-primary);
+            background-image: 
+                radial-gradient(ellipse at 20% 80%, rgba(0, 136, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(0, 20, 40, 1) 0%, var(--bg-primary) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 全息扫描线 */
+        .hologram-scanlines {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 9999;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 255, 0.01) 2px, rgba(0, 255, 255, 0.01) 4px);
+        }
+
+        /* 玻璃拟态面板 */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.05), 0 8px 32px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+        }
+
+        /* 顶部导航栏 */
+        .top-nav {
+            background: linear-gradient(180deg, rgba(0, 20, 40, 0.95) 0%, rgba(0, 8, 20, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: var(--bg-primary);
+            box-shadow: var(--glow-cyan);
+            animation: logoPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { box-shadow: var(--glow-cyan); }
+            50% { box-shadow: 0 0 30px rgba(0, 255, 255, 0.7), 0 0 60px rgba(0, 255, 255, 0.4); }
+        }
+
+        .brand-text {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent-cyan), #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .brand-version {
+            display: block;
+            font-size: 10px;
+            color: var(--accent-cyan);
+            background: rgba(0, 255, 255, 0.1);
+            padding: 2px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            margin-top: 4px;
+        }
+
+        .nav-center {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-item {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: var(--accent-cyan);
+            background: rgba(0, 255, 255, 0.1);
+            border-color: rgba(0, 255, 255, 0.3);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .system-time {
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+            letter-spacing: 2px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 15px var(--accent-green);
+            animation: statusPulse 2s infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.9); }
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 25px;
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .user-info:hover {
+            background: rgba(0, 255, 255, 0.15);
+            border-color: var(--accent-cyan);
+        }
+
+        .user-avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        /* 主内容区布局 */
+        .main-content {
+            margin-top: 70px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 300px 1fr 340px;
+            gap: 20px;
+            min-height: calc(100vh - 70px);
+        }
+
+        /* 左侧面板 */
+        .left-panel, .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-section { padding: 16px; }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .section-header i {
+            color: var(--accent-cyan);
+            font-size: 16px;
+        }
+
+        /* HUD 圆环进度条 */
+        .hud-stat-card {
+            background: rgba(0, 20, 40, 0.6);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hud-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .hud-stat-card:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.1), var(--glow-cyan);
+            transform: translateX(5px);
+        }
+
+        .hud-ring-container {
+            position: relative;
+            width: 80px; height: 80px;
+        }
+
+        .hud-ring {
+            width: 100%; height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .ring-bg {
+            fill: none;
+            stroke: rgba(0, 255, 255, 0.1);
+            stroke-width: 6;
+        }
+
+        .ring-progress {
+            fill: none;
+            stroke-width: 6;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease;
+            filter: drop-shadow(0 0 6px currentColor);
+        }
+
+        .flight-ring { stroke: var(--accent-cyan); }
+        .ontime-ring { stroke: var(--accent-green); }
+        .delay-ring { stroke: var(--accent-orange); }
+        .passenger-ring { stroke: var(--accent-purple); }
+
+        .hud-ring-value {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .hud-ring-value span {
+            display: block;
+            font-size: 18px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            color: var(--text-primary);
+        }
+
+        .hud-ring-value small {
+            font-size: 9px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .stat-trend {
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        .stat-trend.up { color: var(--accent-green); background: rgba(0, 255, 136, 0.1); }
+        .stat-trend.down { color: var(--accent-red); background: rgba(255, 51, 102, 0.1); }
+        .stat-trend.neutral { color: var(--text-secondary); background: rgba(255, 255, 255, 0.05); }
+
+        /* Glitch 动画 */
+        .glitch-text { position: relative; }
+        .glitch-text.glitching { animation: glitch 0.3s ease; }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); text-shadow: 2px 0 var(--accent-cyan), -2px 0 var(--accent-red); }
+            40% { transform: translate(-2px, -2px); text-shadow: -2px 0 var(--accent-cyan), 2px 0 var(--accent-red); }
+            60% { transform: translate(2px, 2px); text-shadow: 2px 0 var(--accent-red), -2px 0 var(--accent-cyan); }
+            80% { transform: translate(2px, -2px); text-shadow: -2px 0 var(--accent-red), 2px 0 var(--accent-cyan); }
+            100% { transform: translate(0); text-shadow: none; }
+        }
+
+        /* 停车场统计 */
+        .parking-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .parking-stat { text-align: center; }
+
+        .parking-label {
+            display: block;
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .parking-value {
+            font-size: 20px;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+
+        .parking-value.cyan { color: var(--accent-cyan); text-shadow: 0 0 10px var(--accent-cyan); }
+        .parking-value.green { color: var(--accent-green); text-shadow: 0 0 10px var(--accent-green); }
+        .parking-value.orange { color: var(--accent-orange); text-shadow: 0 0 10px var(--accent-orange); }
+
+        .chart-container { height: 150px; }
+
+        /* 中央区域 - 3D全息投影 */
+        .center-area {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .hologram-container {
+            flex: 1;
+            min-height: 500px;
+            position: relative;
+            background: radial-gradient(ellipse at center, rgba(0, 136, 255, 0.1) 0%, transparent 60%);
+        }
+
+        #three-canvas {
+            width: 100%; height: 100%;
+            display: block;
+            border-radius: 16px;
+        }
+
+        .hologram-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hologram-corner {
+            position: absolute;
+            width: 40px; height: 40px;
+            border: 2px solid var(--accent-cyan);
+            opacity: 0.8;
+            filter: drop-shadow(0 0 5px var(--accent-cyan));
+        }
+
+        .hologram-corner.tl { top: 15px; left: 15px; border-right: none; border-bottom: none; }
+        .hologram-corner.tr { top: 15px; right: 15px; border-left: none; border-bottom: none; }
+        .hologram-corner.bl { bottom: 15px; left: 15px; border-right: none; border-top: none; }
+        .hologram-corner.br { bottom: 15px; right: 15px; border-left: none; border-top: none; }
+
+        .hologram-scanline {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.8), transparent);
+            animation: scanline 4s linear infinite;
+            filter: blur(1px);
+        }
+
+        @keyframes scanline {
+            0% { top: 0; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .hologram-label {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 0 20px var(--accent-cyan);
+            z-index: 11;
+        }
+
+        .data-ring-display {
+            position: absolute;
+            top: 20px; right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 11;
+        }
+
+        .data-ring-item {
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 10px 16px;
+            text-align: right;
+            backdrop-filter: blur(10px);
+        }
+
+        .data-ring-label {
+            display: block;
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .data-ring-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px var(--accent-cyan);
+        }
+
+        /* 快捷操作 */
+        .quick-actions { padding: 16px; }
+
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+        }
+
+        .module-btn {
+            background: linear-gradient(135deg, rgba(0, 136, 255, 0.1) 0%, rgba(0, 255, 255, 0.05) 100%);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .module-btn:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.2), inset 0 0 30px rgba(0, 255, 255, 0.1);
+        }
+
+        .module-btn:hover::before { opacity: 1; }
+
+        .module-btn i {
+            font-size: 28px;
+            color: var(--accent-cyan);
+            margin-bottom: 10px;
+            display: block;
+            filter: drop-shadow(0 0 8px var(--accent-cyan));
+        }
+
+        .module-btn span {
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: block;
+        }
+
+        /* LIVE 徽章 */
+        .live-badge {
+            background: linear-gradient(135deg, var(--accent-red), #ff6b6b);
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 10px;
+            animation: livePulse 1.5s ease-in-out infinite;
+            margin-left: auto;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--accent-red); }
+            50% { opacity: 0.7; box-shadow: 0 0 20px var(--accent-red); }
+        }
+
+        /* 航班列表 */
+        .flight-list { max-height: 280px; overflow-y: auto; }
+
+        .flight-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(0, 20, 40, 0.5);
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .flight-item:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 255, 255, 0.05);
+            transform: translateX(5px);
+        }
+
+        .flight-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+
+        .flight-icon.departure {
+            background: rgba(0, 255, 255, 0.15);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .flight-icon.arrival {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .flight-info { flex: 1; }
+        .flight-no { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+        .flight-route { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+        .flight-status {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .flight-status.on-time { background: rgba(0, 255, 136, 0.15); color: var(--accent-green); border: 1px solid rgba(0, 255, 136, 0.3); }
+        .flight-status.delayed { background: rgba(255, 149, 0, 0.15); color: var(--accent-orange); border: 1px solid rgba(255, 149, 0, 0.3); }
+        .flight-status.boarding { background: rgba(0, 255, 255, 0.15); color: var(--accent-cyan); border: 1px solid rgba(0, 255, 255, 0.3); }
+        .flight-status.cancelled { background: rgba(255, 51, 102, 0.15); color: var(--accent-red); border: 1px solid rgba(255, 51, 102, 0.3); }
+
+        /* 登机口网格 */
+        .gate-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .gate-item {
+            background: rgba(0, 20, 40, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .gate-item.active {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            animation: gateBreath 2s ease-in-out infinite;
+        }
+
+        .gate-item.maintenance {
+            border-color: var(--accent-orange);
+            background: rgba(255, 149, 0, 0.1);
+        }
+
+        @keyframes gateBreath {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.2); }
+            50% { box-shadow: 0 0 30px rgba(0, 255, 255, 0.4); }
+        }
+
+        .gate-no { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+        .gate-terminal { font-size: 10px; color: var(--text-secondary); margin-top: 4px; }
+
+        /* 系统日志 */
+        .log-container {
+            max-height: 180px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+        }
+
+        .log-item {
+            padding: 8px 10px;
+            margin-bottom: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            display: flex;
+            gap: 10px;
+            border-left: 2px solid transparent;
+        }
+
+        .log-item.info { border-left-color: var(--accent-cyan); }
+        .log-item.warning { border-left-color: var(--accent-orange); }
+        .log-item.success { border-left-color: var(--accent-green); }
+        .log-item.error { border-left-color: var(--accent-red); }
+
+        .log-time { color: var(--text-secondary); flex-shrink: 0; }
+
+        .log-type {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 600;
+            flex-shrink: 0;
+            text-transform: uppercase;
+        }
+
+        .log-type.info { background: rgba(0, 255, 255, 0.2); color: var(--accent-cyan); }
+        .log-type.warning { background: rgba(255, 149, 0, 0.2); color: var(--accent-orange); }
+        .log-type.success { background: rgba(0, 255, 136, 0.2); color: var(--accent-green); }
+        .log-type.error { background: rgba(255, 51, 102, 0.2); color: var(--accent-red); }
+
+        .log-message { color: var(--text-primary); flex: 1; }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 90px; right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: rgba(0, 20, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success { border-left: 4px solid var(--accent-green); }
+        .toast.warning { border-left: 4px solid var(--accent-orange); }
+        .toast.error { border-left: 4px solid var(--accent-red); }
+        .toast.info { border-left: 4px solid var(--accent-cyan); }
+
+        .toast i { font-size: 20px; }
+        .toast.success i { color: var(--accent-green); }
+        .toast.warning i { color: var(--accent-orange); }
+        .toast.error i { color: var(--accent-red); }
+        .toast.info i { color: var(--accent-cyan); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* 赛博 Modal */
+        .cyber-modal-content {
+            background: rgba(0, 20, 40, 0.95) !important;
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--accent-cyan) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.3), inset 0 0 100px rgba(0, 255, 255, 0.05) !important;
+        }
+
+        .cyber-modal-header {
+            background: linear-gradient(90deg, rgba(0, 255, 255, 0.1), transparent);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3) !important;
+            padding: 20px 24px !important;
+        }
+
+        .cyber-modal-header .modal-title {
+            color: var(--accent-cyan);
+            font-weight: 700;
+            text-shadow: 0 0 20px var(--accent-cyan);
+        }
+
+        .cyber-modal-body { padding: 24px !important; }
+
+        .cyber-search-box {
+            position: relative;
+            width: 300px;
+        }
+
+        .cyber-search-box i {
+            position: absolute;
+            left: 16px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent-cyan);
+        }
+
+        .cyber-input {
+            background: rgba(0, 20, 40, 0.8) !important;
+            border: 1px solid rgba(0, 255, 255, 0.3) !important;
+            border-radius: 10px !important;
+            color: var(--text-primary) !important;
+            padding: 12px 16px 12px 44px !important;
+        }
+
+        .cyber-input:focus {
+            border-color: var(--accent-cyan) !important;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3) !important;
+        }
+
+        .cyber-btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)) !important;
+            border: none !important;
+            color: var(--bg-primary) !important;
+            font-weight: 600 !important;
+            padding: 12px 24px !important;
+            border-radius: 10px !important;
+        }
+
+        .cyber-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.4) !important;
+        }
+
+        .cyber-table { color: var(--text-primary) !important; }
+        .cyber-table thead { background: rgba(0, 255, 255, 0.1); }
+        .cyber-table thead th {
+            color: var(--accent-cyan) !important;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            padding: 16px !important;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3) !important;
+        }
+
+        .cyber-table tbody tr {
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .cyber-table tbody tr:hover { background: rgba(0, 255, 255, 0.05); }
+        .cyber-table tbody td { padding: 14px 16px !important; border: none !important; }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 20, 40, 0.5); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 255, 255, 0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 255, 255, 0.5); }
+
+        /* 响应式 */
+        @media (max-width: 1400px) {
+            .main-content { grid-template-columns: 280px 1fr 300px; }
+            .module-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 1200px) {
+            .main-content { grid-template-columns: 1fr; }
+            .left-panel, .right-panel { display: none; }
+            .nav-center { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="hologram-scanlines"></div>
+
+    <!-- 顶部导航栏 -->
+    <nav class="top-nav">
+        <div class="brand">
+            <div class="brand-logo"><i class="bi bi-airplane-engines"></i></div>
+            <div>
+                <span class="brand-text">LUMIÈRE COMMAND CENTER</span>
+                <span class="brand-version">v4.5 CINEMATIC EDITION</span>
+            </div>
+        </div>
+        
+        <div class="nav-center">
+            <a class="nav-item active" onclick="showModule('flight')"><i class="bi bi-airplane me-1"></i>航班管理</a>
+            <a class="nav-item" onclick="showModule('parking')"><i class="bi bi-p-circle me-1"></i>停车场</a>
+            <a class="nav-item" onclick="showModule('shuttle')"><i class="bi bi-bus-front me-1"></i>接驳预约</a>
+            <a class="nav-item" onclick="showModule('airline')"><i class="bi bi-building me-1"></i>航空公司</a>
+            <a class="nav-item" onclick="showModule('gate')"><i class="bi bi-door-open me-1"></i>登机口</a>
+        </div>
+        
+        <div class="nav-right">
+            <div class="system-time"><span id="systemTime">00:00:00</span></div>
+            <div class="connection-status">
+                <span class="status-dot" id="wsStatus"></span>
+                <span id="wsStatusText">演示模式</span>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar"><i class="bi bi-person"></i></div>
+                <span id="userName">系统管理员</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 左侧面板 -->
+        <aside class="left-panel">
+            <div class="panel-section glass-panel">
+                <div class="section-header"><i class="bi bi-activity"></i><span>系统状态</span></div>
+                
+                <div class="hud-stat-card">
+                    <div class="hud-ring-container">
+                        <svg class="hud-ring" viewBox="0 0 100 100">
+                            <circle class="ring-bg" cx="50" cy="50" r="40"/>
+                            <circle class="ring-progress flight-ring" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="125.6"/>
+                        </svg>
+                        <div class="hud-ring-value">
+                            <span class="glitch-text" id="totalFlights">42</span>
+                            <small>今日航班</small>
+                        </div>
+                    </div>
+                    <div class="stat-trend up"><i class="bi bi-arrow-up"></i><span>+12%</span></div>
+                </div>
+                
+                <div class="hud-stat-card">
+                    <div class="hud-ring-container">
+                        <svg class="hud-ring" viewBox="0 0 100 100">
+                            <circle class="ring-bg" cx="50" cy="50" r="40"/>
+                            <circle class="ring-progress ontime-ring" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="32.6"/>
+                        </svg>
+                        <div class="hud-ring-value">
+                            <span class="glitch-text" id="onTimeRate">87%</span>
+                            <small>准点率</small>
+                        </div>
+                    </div>
+                    <div class="stat-trend up"><i class="bi bi-arrow-up"></i><span>较昨日提升</span></div>
+                </div>
+                
+                <div class="hud-stat-card">
+                    <div class="hud-ring-container">
+                        <svg class="hud-ring" viewBox="0 0 100 100">
+                            <circle class="ring-bg" cx="50" cy="50" r="40"/>
+                            <circle class="ring-progress delay-ring" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="213.5"/>
+                        </svg>
+                        <div class="hud-ring-value">
+                            <span class="glitch-text" id="delayedFlights">3</span>
+                            <small>延误航班</small>
+                        </div>
+                    </div>
+                    <div class="stat-trend down"><i class="bi bi-arrow-down"></i><span>需要关注</span></div>
+                </div>
+                
+                <div class="hud-stat-card">
+                    <div class="hud-ring-container">
+                        <svg class="hud-ring" viewBox="0 0 100 100">
+                            <circle class="ring-bg" cx="50" cy="50" r="40"/>
+                            <circle class="ring-progress passenger-ring" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="93"/>
+                        </svg>
+                        <div class="hud-ring-value">
+                            <span class="glitch-text" id="totalPassengers">6,300</span>
+                            <small>旅客吞吐</small>
+                        </div>
+                    </div>
+                    <div class="stat-trend neutral"><i class="bi bi-people"></i><span>人次/今日</span></div>
+                </div>
+            </div>
+            
+            <div class="panel-section glass-panel">
+                <div class="section-header"><i class="bi bi-car-front"></i><span>停车场实时</span></div>
+                <div class="parking-stats">
+                    <div class="parking-stat">
+                        <span class="parking-label">已占用</span>
+                        <span class="parking-value cyan" id="parkingOccupied">234</span>
+                    </div>
+                    <div class="parking-stat">
+                        <span class="parking-label">空闲</span>
+                        <span class="parking-value green" id="parkingAvailable">166</span>
+                    </div>
+                    <div class="parking-stat">
+                        <span class="parking-label">占用率</span>
+                        <span class="parking-value orange" id="parkingRate">58%</span>
+                    </div>
+                </div>
+                <div class="chart-container" id="parkingChart"></div>
+            </div>
+        </aside>
+
+        <!-- 中央区域 -->
+        <main class="center-area">
+            <div class="hologram-container glass-panel">
+                <canvas id="three-canvas"></canvas>
+                <div class="hologram-overlay">
+                    <div class="hologram-corner tl"></div>
+                    <div class="hologram-corner tr"></div>
+                    <div class="hologram-corner bl"></div>
+                    <div class="hologram-corner br"></div>
+                    <div class="hologram-scanline"></div>
+                </div>
+                <div class="hologram-label">DIGITAL TWIN · 数字孪生模型</div>
+                <div class="data-ring-display">
+                    <div class="data-ring-item">
+                        <span class="data-ring-label">实时客流</span>
+                        <span class="data-ring-value" id="realtimePassengers">1,234</span>
+                    </div>
+                    <div class="data-ring-item">
+                        <span class="data-ring-label">吞吐率</span>
+                        <span class="data-ring-value" id="throughputRate">89%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="quick-actions glass-panel">
+                <div class="section-header"><i class="bi bi-grid-3x3-gap"></i><span>快捷操作</span></div>
+                <div class="module-grid">
+                    <div class="module-btn" onclick="showModule('flight')"><i class="bi bi-airplane"></i><span>航班管理</span></div>
+                    <div class="module-btn" onclick="showModule('parking')"><i class="bi bi-p-circle"></i><span>停车管理</span></div>
+                    <div class="module-btn" onclick="showModule('shuttle')"><i class="bi bi-bus-front"></i><span>接驳预约</span></div>
+                    <div class="module-btn" onclick="showModule('airline')"><i class="bi bi-building"></i><span>航空公司</span></div>
+                    <div class="module-btn" onclick="showModule('gate')"><i class="bi bi-door-open"></i><span>登机口</span></div>
+                    <div class="module-btn" onclick="showModule('notice')"><i class="bi bi-megaphone"></i><span>系统公告</span></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 右侧面板 -->
+        <aside class="right-panel">
+            <div class="panel-section glass-panel">
+                <div class="section-header">
+                    <i class="bi bi-broadcast"></i><span>实时航班动态</span>
+                    <span class="live-badge">LIVE</span>
+                </div>
+                <div class="flight-list" id="flightList"></div>
+            </div>
+
+            <div class="panel-section glass-panel">
+                <div class="section-header"><i class="bi bi-door-open"></i><span>登机口状态</span></div>
+                <div class="gate-grid" id="gateGrid"></div>
+            </div>
+
+            <div class="panel-section glass-panel">
+                <div class="section-header"><i class="bi bi-terminal"></i><span>系统日志</span></div>
+                <div class="log-container" id="logContainer"></div>
+            </div>
+        </aside>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="dataModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content cyber-modal-content">
+                <div class="modal-header cyber-modal-header">
+                    <h5 class="modal-title" id="modalTitle">数据管理</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body cyber-modal-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <div class="cyber-search-box">
+                            <i class="bi bi-search"></i>
+                            <input type="text" class="form-control cyber-input" id="searchInput" placeholder="搜索...">
+                        </div>
+                        <button class="btn cyber-btn-primary"><i class="bi bi-plus-lg me-1"></i>新增</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table cyber-table" id="dataTable">
+                            <thead id="tableHead"></thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    
+    <!-- 主应用脚本 -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+        // 全局变量
+        let scene, camera, renderer, controls, composer;
+        let airportModel, particles, flyingPlanes = [];
+        let gateLabels = [], dataRings = [];
+        let parkingChart = null;
+
+        const gatePositions = {
+            'A01': { x: -20, z: -18 }, 'A02': { x: -10, z: -18 }, 'A03': { x: 0, z: -18 },
+            'B01': { x: 10, z: -18 }, 'B02': { x: 20, z: -18 }, 'B03': { x: 25, z: -18 },
+            'C01': { x: -15, z: 18 }, 'C02': { x: -5, z: 18 }, 'C03': { x: 5, z: 18 }, 'C04': { x: 15, z: 18 }
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Lumière Airport v4.5 - 电影级先锋版 启动中...');
+            initThreeJS();
+            initCharts();
+            initUI();
+            updateSystemTime();
+            setInterval(updateSystemTime, 1000);
+            setInterval(simulateDataUpdate, 5000);
+            initGlitchEffects();
+        });
+
+        function initThreeJS() {
+            const container = document.getElementById('three-canvas');
+            const parent = container.parentElement;
+            const width = parent.clientWidth;
+            const height = parent.clientHeight;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000814);
+            scene.fog = new THREE.FogExp2(0x000814, 0.003);
+
+            camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+            camera.position.set(100, 80, 100);
+
+            renderer = new THREE.WebGLRenderer({ canvas: container, antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ReinhardToneMapping;
+            renderer.toneMappingExposure = 1.5;
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 40;
+            controls.maxDistance = 250;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.3;
+            controls.maxPolarAngle = Math.PI / 2.2;
+
+            initPostProcessing();
+            createAirportModel();
+            createParticles();
+            createFlyingPlanes();
+            createDataRings();
+            createGrid();
+            addLights();
+            animate();
+
+            window.addEventListener('resize', onWindowResize);
+            console.log('✅ Three.js 3D场景初始化完成');
+        }
+
+        function initPostProcessing() {
+            const container = document.getElementById('three-canvas').parentElement;
+            composer = new EffectComposer(renderer);
+            composer.addPass(new RenderPass(scene, camera));
+            
+            const bloomPass = new UnrealBloomPass(
+                new THREE.Vector2(container.clientWidth, container.clientHeight),
+                1.5, 0.4, 0.85
+            );
+            bloomPass.threshold = 0.1;
+            bloomPass.strength = 1.2;
+            bloomPass.radius = 0.8;
+            composer.addPass(bloomPass);
+            composer.addPass(new OutputPass());
+        }
+
+        function createAirportModel() {
+            airportModel = new THREE.Group();
+            const glowMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.9 });
+            const greenGlowMaterial = new THREE.LineBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.8 });
+            const orangeGlowMaterial = new THREE.LineBasicMaterial({ color: 0xff9500, transparent: true, opacity: 0.6 });
+
+            // 主航站楼
+            const terminalGeometry = new THREE.BoxGeometry(70, 14, 35);
+            const terminalEdges = new THREE.EdgesGeometry(terminalGeometry);
+            const terminalWireframe = new THREE.LineSegments(terminalEdges, glowMaterial);
+            terminalWireframe.position.y = 7;
+            airportModel.add(terminalWireframe);
+
+            const terminalFillMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.03, side: THREE.DoubleSide });
+            const terminalFill = new THREE.Mesh(terminalGeometry, terminalFillMaterial);
+            terminalFill.position.y = 7;
+            airportModel.add(terminalFill);
+
+            // 控制塔
+            const towerGeometry = new THREE.CylinderGeometry(3, 5, 30, 8);
+            const towerEdges = new THREE.EdgesGeometry(towerGeometry);
+            const towerWireframe = new THREE.LineSegments(towerEdges, glowMaterial);
+            towerWireframe.position.set(-50, 15, 0);
+            airportModel.add(towerWireframe);
+
+            const towerTopGeometry = new THREE.CylinderGeometry(6, 4, 8, 8);
+            const towerTopEdges = new THREE.EdgesGeometry(towerTopGeometry);
+            const towerTopWireframe = new THREE.LineSegments(towerTopEdges, glowMaterial);
+            towerTopWireframe.position.set(-50, 34, 0);
+            airportModel.add(towerTopWireframe);
+
+            // 雷达
+            const radarGeometry = new THREE.BoxGeometry(12, 0.5, 1);
+            const radarEdges = new THREE.EdgesGeometry(radarGeometry);
+            const radarMaterial = new THREE.LineBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0.9 });
+            const radarWireframe = new THREE.LineSegments(radarEdges, radarMaterial);
+            radarWireframe.position.set(-50, 38, 0);
+            radarWireframe.userData.isRadar = true;
+            airportModel.add(radarWireframe);
+
+            // 跑道
+            const runwayGeometry = new THREE.PlaneGeometry(180, 18);
+            const runwayEdges = new THREE.EdgesGeometry(runwayGeometry);
+            const runwayWireframe = new THREE.LineSegments(runwayEdges, greenGlowMaterial);
+            runwayWireframe.rotation.x = -Math.PI / 2;
+            runwayWireframe.position.set(0, 0.1, 50);
+            airportModel.add(runwayWireframe);
+
+            // 跑道中心线
+            const centerLineGeometry = new THREE.BufferGeometry();
+            const centerLinePoints = [];
+            for (let i = -85; i < 85; i += 12) {
+                centerLinePoints.push(new THREE.Vector3(i, 0.2, 50));
+                centerLinePoints.push(new THREE.Vector3(i + 6, 0.2, 50));
+            }
+            centerLineGeometry.setFromPoints(centerLinePoints);
+            const centerLine = new THREE.LineSegments(centerLineGeometry, new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.6, transparent: true }));
+            airportModel.add(centerLine);
+
+            // 登机口
+            Object.entries(gatePositions).forEach(([name, pos], index) => {
+                const bridgeGeometry = new THREE.BoxGeometry(4, 4, 10);
+                const bridgeEdges = new THREE.EdgesGeometry(bridgeGeometry);
+                const bridgeWireframe = new THREE.LineSegments(bridgeEdges, new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.7 }));
+                bridgeWireframe.position.set(pos.x, 2, pos.z);
+                airportModel.add(bridgeWireframe);
+
+                const labelGeometry = new THREE.SphereGeometry(1.2, 16, 16);
+                const labelMaterial = new THREE.MeshBasicMaterial({ color: index % 2 === 0 ? 0x00ffff : 0x00ff88, transparent: true, opacity: 0.9 });
+                const labelMesh = new THREE.Mesh(labelGeometry, labelMaterial);
+                labelMesh.position.set(pos.x, 6, pos.z);
+                labelMesh.userData = { name: name, baseOpacity: 0.9 };
+                airportModel.add(labelMesh);
+                gateLabels.push(labelMesh);
+            });
+
+            // 停机坪
+            for (let i = 0; i < 6; i++) {
+                const apronGeometry = new THREE.PlaneGeometry(14, 18);
+                const apronEdges = new THREE.EdgesGeometry(apronGeometry);
+                const apronWireframe = new THREE.LineSegments(apronEdges, orangeGlowMaterial);
+                apronWireframe.rotation.x = -Math.PI / 2;
+                apronWireframe.position.set(-35 + i * 14, 0.1, -40);
+                airportModel.add(apronWireframe);
+            }
+
+            // 第二跑道
+            const runway2Geometry = new THREE.PlaneGeometry(150, 15);
+            const runway2Edges = new THREE.EdgesGeometry(runway2Geometry);
+            const runway2Mat = greenGlowMaterial.clone();
+            runway2Mat.opacity = 0.5;
+            const runway2Wireframe = new THREE.LineSegments(runway2Edges, runway2Mat);
+            runway2Wireframe.rotation.x = -Math.PI / 2;
+            runway2Wireframe.position.set(0, 0.1, -60);
+            airportModel.add(runway2Wireframe);
+
+            scene.add(airportModel);
+        }
+
+        function createParticles() {
+            const particleCount = 800;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 300;
+                positions[i + 1] = Math.random() * 150;
+                positions[i + 2] = (Math.random() - 0.5) * 300;
+                const isCyan = Math.random() > 0.5;
+                colors[i] = 0; colors[i + 1] = 1; colors[i + 2] = isCyan ? 1 : 0.5;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            particles = new THREE.Points(geometry, new THREE.PointsMaterial({
+                size: 0.8, transparent: true, opacity: 0.7, vertexColors: true, blending: THREE.AdditiveBlending
+            }));
+            scene.add(particles);
+        }
+
+        function createFlyingPlanes() {
+            for (let i = 0; i < 8; i++) {
+                const planeGroup = new THREE.Group();
+                const bodyGeometry = new THREE.ConeGeometry(1, 4, 4);
+                const body = new THREE.Mesh(bodyGeometry, new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.9 }));
+                body.rotation.x = Math.PI / 2;
+                planeGroup.add(body);
+
+                const angle = Math.random() * Math.PI * 2;
+                const radius = 80 + Math.random() * 60;
+                const height = 30 + Math.random() * 40;
+                planeGroup.position.set(Math.cos(angle) * radius, height, Math.sin(angle) * radius);
+                planeGroup.userData = { angle, radius, height, speed: 0.002 + Math.random() * 0.003, verticalSpeed: (Math.random() - 0.5) * 0.1 };
+                flyingPlanes.push(planeGroup);
+                scene.add(planeGroup);
+            }
+        }
+
+        function createDataRings() {
+            for (let i = 0; i < 3; i++) {
+                const radius = 55 + i * 15;
+                const ringGeometry = new THREE.BufferGeometry();
+                const ringPositions = [];
+                for (let j = 0; j <= 64; j++) {
+                    const theta = (j / 64) * Math.PI * 2;
+                    ringPositions.push(Math.cos(theta) * radius, 0.5 + i * 0.3, Math.sin(theta) * radius);
+                }
+                ringGeometry.setAttribute('position', new THREE.Float32BufferAttribute(ringPositions, 3));
+                const ring = new THREE.Line(ringGeometry, new THREE.LineBasicMaterial({
+                    color: i === 0 ? 0x00ffff : (i === 1 ? 0x00ff88 : 0x0088ff), transparent: true, opacity: 0.4 - i * 0.1
+                }));
+                ring.userData = { rotationSpeed: 0.001 * (i + 1) * (i % 2 === 0 ? 1 : -1), baseOpacity: 0.4 - i * 0.1 };
+                dataRings.push(ring);
+                scene.add(ring);
+            }
+
+            for (let i = 0; i < 20; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = 55 + Math.random() * 30;
+                const dot = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.5, 8, 8),
+                    new THREE.MeshBasicMaterial({ color: Math.random() > 0.5 ? 0x00ffff : 0x00ff88, transparent: true, opacity: 0.8 })
+                );
+                dot.position.set(Math.cos(angle) * radius, 0.5 + Math.random() * 2, Math.sin(angle) * radius);
+                dot.userData = { angle, radius, speed: 0.005 + Math.random() * 0.01 };
+                dataRings.push(dot);
+                scene.add(dot);
+            }
+        }
+
+        function createGrid() {
+            const gridHelper = new THREE.GridHelper(300, 60, 0x0066ff, 0x002244);
+            gridHelper.material.opacity = 0.3;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+
+            const outerRing = new THREE.Mesh(
+                new THREE.RingGeometry(140, 145, 64),
+                new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.1, side: THREE.DoubleSide })
+            );
+            outerRing.rotation.x = -Math.PI / 2;
+            outerRing.position.y = 0.1;
+            scene.add(outerRing);
+        }
+
+        function addLights() {
+            scene.add(new THREE.AmbientLight(0x404040, 0.3));
+            const p1 = new THREE.PointLight(0x00ffff, 2, 200); p1.position.set(0, 80, 0); scene.add(p1);
+            const p2 = new THREE.PointLight(0x0066ff, 1, 150); p2.position.set(80, 50, 80); scene.add(p2);
+            const p3 = new THREE.PointLight(0x00ff88, 1, 150); p3.position.set(-80, 50, -80); scene.add(p3);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = Date.now() * 0.001;
+            controls.update();
+
+            if (particles) {
+                particles.rotation.y += 0.0003;
+                const positions = particles.geometry.attributes.position.array;
+                for (let i = 1; i < positions.length; i += 3) {
+                    positions[i] -= 0.03;
+                    if (positions[i] < 0) positions[i] = 150;
+                }
+                particles.geometry.attributes.position.needsUpdate = true;
+            }
+
+            gateLabels.forEach((label, index) => {
+                const breathe = Math.sin(time * 2 + index * 0.5) * 0.3 + 0.7;
+                label.material.opacity = label.userData.baseOpacity * breathe;
+                label.scale.setScalar(0.8 + breathe * 0.4);
+            });
+
+            airportModel.children.forEach(child => {
+                if (child.userData.isRadar) child.rotation.y += 0.02;
+            });
+
+            flyingPlanes.forEach(plane => {
+                const data = plane.userData;
+                data.angle += data.speed;
+                data.height += data.verticalSpeed;
+                if (data.height > 70 || data.height < 20) data.verticalSpeed *= -1;
+                plane.position.x = Math.cos(data.angle) * data.radius;
+                plane.position.z = Math.sin(data.angle) * data.radius;
+                plane.position.y = data.height;
+                plane.rotation.y = -data.angle + Math.PI / 2;
+            });
+
+            dataRings.forEach(ring => {
+                if (ring.userData.rotationSpeed) {
+                    ring.rotation.y += ring.userData.rotationSpeed;
+                    ring.material.opacity = ring.userData.baseOpacity * (0.8 + Math.sin(time * 2) * 0.2);
+                } else if (ring.userData.speed) {
+                    ring.userData.angle += ring.userData.speed;
+                    ring.position.x = Math.cos(ring.userData.angle) * ring.userData.radius;
+                    ring.position.z = Math.sin(ring.userData.angle) * ring.userData.radius;
+                }
+            });
+
+            composer.render();
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('three-canvas').parentElement;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            composer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // 相机动画
+        window.animateCameraToGate = function(gateName) {
+            const gatePos = gatePositions[gateName];
+            if (!gatePos) return;
+            controls.autoRotate = false;
+            const startPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+            const endPos = { x: gatePos.x + 30, y: 40, z: gatePos.z + 30 };
+            const duration = 2000;
+            const startTime = Date.now();
+
+            function updateCamera() {
+                const progress = Math.min((Date.now() - startTime) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                camera.position.x = startPos.x + (endPos.x - startPos.x) * eased;
+                camera.position.y = startPos.y + (endPos.y - startPos.y) * eased;
+                camera.position.z = startPos.z + (endPos.z - startPos.z) * eased;
+                controls.target.set(gatePos.x, 5, gatePos.z);
+                controls.update();
+                if (progress < 1) requestAnimationFrame(updateCamera);
+                else setTimeout(() => { controls.autoRotate = true; }, 3000);
+            }
+            updateCamera();
+        };
+
+        function initCharts() {
+            const chartDom = document.getElementById('parkingChart');
+            if (!chartDom) return;
+            parkingChart = echarts.init(chartDom, 'dark');
+            parkingChart.setOption({
+                backgroundColor: 'transparent',
+                series: [{
+                    type: 'gauge', startAngle: 180, endAngle: 0, min: 0, max: 100, splitNumber: 5,
+                    radius: '100%', center: ['50%', '80%'],
+                    axisLine: { lineStyle: { width: 12, color: [[0.3, '#00ff88'], [0.7, '#00ffff'], [1, '#ff9500']] } },
+                    pointer: { icon: 'path://M12.8,0.7l12,40.1H0.7L12.8,0.7z', length: '55%', width: 6, itemStyle: { color: '#00ffff', shadowColor: '#00ffff', shadowBlur: 10 } },
+                    axisTick: { length: 6, lineStyle: { color: 'auto', width: 1 } },
+                    splitLine: { length: 10, lineStyle: { color: 'auto', width: 2 } },
+                    axisLabel: { color: '#6ec8e8', fontSize: 9, distance: -35 },
+                    title: { offsetCenter: [0, '25%'], fontSize: 10, color: '#6ec8e8' },
+                    detail: { fontSize: 18, offsetCenter: [0, '-5%'], valueAnimation: true, formatter: '{value}%', color: '#00ffff', fontFamily: 'Courier New' },
+                    data: [{ value: 58, name: '占用率' }]
+                }]
+            });
+        }
+
+        function initUI() {
+            // 初始化登机口
+            const gates = [
+                { gateNo: 'A01', terminal: 'T1', status: 1 }, { gateNo: 'A02', terminal: 'T1', status: 0 },
+                { gateNo: 'A03', terminal: 'T1', status: 1 }, { gateNo: 'B01', terminal: 'T2', status: 0 },
+                { gateNo: 'B02', terminal: 'T2', status: 1 }, { gateNo: 'B03', terminal: 'T2', status: 2 },
+                { gateNo: 'C01', terminal: 'T3', status: 1 }, { gateNo: 'C02', terminal: 'T3', status: 0 }
+            ];
+            updateGateGrid(gates);
+
+            // 初始化航班
+            const flights = [
+                { flightNo: 'CA1234', departureCity: '北京', arrivalCity: '上海', newStatus: 4, statusText: '已到达', gateNo: 'A01' },
+                { flightNo: 'MU5678', departureCity: '上海', arrivalCity: '广州', newStatus: 1, statusText: '登机中', gateNo: 'A03' },
+                { flightNo: 'CZ3456', departureCity: '广州', arrivalCity: '北京', newStatus: 3, statusText: '已起飞', gateNo: 'B01' }
+            ];
+            flights.forEach(f => addFlightUpdate(f));
+
+            addLog('success', '系统初始化完成 - v4.5 电影级先锋版');
+            addLog('info', 'Three.js ES Modules 架构加载成功');
+            addLog('info', 'Bloom 后处理管线已启用');
+        }
+
+        function updateGateGrid(gates) {
+            const grid = document.getElementById('gateGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            gates.forEach(gate => {
+                const item = document.createElement('div');
+                item.className = `gate-item ${gate.status === 1 ? 'active' : ''} ${gate.status === 2 ? 'maintenance' : ''}`;
+                item.innerHTML = `<div class="gate-no">${gate.gateNo}</div><div class="gate-terminal">${gate.terminal}</div>`;
+                item.onclick = () => window.animateCameraToGate(gate.gateNo);
+                grid.appendChild(item);
+            });
+        }
+
+        function addFlightUpdate(flight) {
+            const list = document.getElementById('flightList');
+            if (!list) return;
+            const statusClass = { 0: 'on-time', 1: 'boarding', 2: 'delayed', 3: 'on-time', 4: 'on-time', 5: 'cancelled' }[flight.newStatus] || 'on-time';
+            const item = document.createElement('div');
+            item.className = 'flight-item';
+            item.onclick = () => flight.gateNo && window.animateCameraToGate(flight.gateNo);
+            item.innerHTML = `
+                <div class="flight-icon ${flight.newStatus === 3 || flight.newStatus === 4 ? 'arrival' : 'departure'}">
+                    <i class="bi bi-airplane${flight.newStatus === 4 ? '-fill' : ''}"></i>
+                </div>
+                <div class="flight-info">
+                    <div class="flight-no">${flight.flightNo}</div>
+                    <div class="flight-route">${flight.departureCity} → ${flight.arrivalCity}</div>
+                </div>
+                <span class="flight-status ${statusClass}">${flight.statusText}</span>
+            `;
+            list.insertBefore(item, list.firstChild);
+            while (list.children.length > 10) list.removeChild(list.lastChild);
+        }
+
+        function addLog(type, message) {
+            const container = document.getElementById('logContainer');
+            if (!container) return;
+            const time = new Date().toTimeString().split(' ')[0];
+            const item = document.createElement('div');
+            item.className = `log-item ${type}`;
+            item.innerHTML = `<span class="log-time">${time}</span><span class="log-type ${type}">${type.toUpperCase()}</span><span class="log-message">${message}</span>`;
+            container.insertBefore(item, container.firstChild);
+            while (container.children.length > 20) container.removeChild(container.lastChild);
+        }
+
+        function updateSystemTime() {
+            const el = document.getElementById('systemTime');
+            if (el) el.textContent = new Date().toTimeString().split(' ')[0];
+        }
+
+        function simulateDataUpdate() {
+            const passengers = Math.floor(1000 + Math.random() * 500);
+            const throughput = Math.floor(80 + Math.random() * 15);
+            const pEl = document.getElementById('realtimePassengers');
+            const tEl = document.getElementById('throughputRate');
+            if (pEl) pEl.textContent = passengers.toLocaleString();
+            if (tEl) tEl.textContent = throughput + '%';
+
+            if (Math.random() > 0.7) {
+                const flights = ['CA1234', 'MU5678', 'CZ3456', 'HU7890', '3U8888'];
+                const cities = ['北京', '上海', '广州', '深圳', '成都', '杭州'];
+                const statuses = [{ status: 1, text: '登机中' }, { status: 3, text: '已起飞' }, { status: 4, text: '已到达' }];
+                const gates = Object.keys(gatePositions);
+                addFlightUpdate({
+                    flightNo: flights[Math.floor(Math.random() * flights.length)],
+                    departureCity: cities[Math.floor(Math.random() * cities.length)],
+                    arrivalCity: cities[Math.floor(Math.random() * cities.length)],
+                    newStatus: statuses[Math.floor(Math.random() * statuses.length)].status,
+                    statusText: statuses[Math.floor(Math.random() * statuses.length)].text,
+                    gateNo: gates[Math.floor(Math.random() * gates.length)]
+                });
+            }
+        }
+
+        function initGlitchEffects() {
+            setInterval(() => {
+                const elements = document.querySelectorAll('.glitch-text');
+                const el = elements[Math.floor(Math.random() * elements.length)];
+                if (el) {
+                    el.classList.add('glitching');
+                    setTimeout(() => el.classList.remove('glitching'), 300);
+                }
+            }, 3000);
+        }
+
+        // 模块显示
+        window.showModule = function(module) {
+            const configs = {
+                flight: { title: '航班管理', columns: ['航班号', '航空公司', '出发城市', '到达城市', '计划时间', '登机口', '状态'] },
+                parking: { title: '停车管理', columns: ['记录号', '停车场', '车牌号', '入场时间', '出场时间', '费用', '状态'] },
+                shuttle: { title: '接驳预约', columns: ['预约号', '乘客姓名', '联系电话', '关联航班', '预约时间', '状态'] },
+                airline: { title: '航空公司', columns: ['公司代码', '公司名称', '英文名称', '国家', '联系电话'] },
+                gate: { title: '登机口管理', columns: ['登机口', '航站楼', '类型', '状态', '当前航班'] },
+                notice: { title: '系统公告', columns: ['标题', '类型', '优先级', '发布时间', '状态'] }
+            };
+            const config = configs[module];
+            document.getElementById('modalTitle').textContent = config.title;
+            document.getElementById('tableHead').innerHTML = '<tr>' + config.columns.map(c => `<th>${c}</th>`).join('') + '<th>操作</th></tr>';
+            
+            // 模拟数据
+            const mockData = module === 'flight' ? [
+                ['CA1234', '中国国际航空', '北京', '上海', '01/10 06:30', 'A01', '到达'],
+                ['MU5678', '中国东方航空', '上海', '广州', '01/10 07:15', 'A03', '到达'],
+                ['CZ3456', '中国南方航空', '广州', '北京', '01/10 08:00', 'B01', '取消'],
+                ['HU7890', '海南航空', '海口', '成都', '01/10 08:45', 'B02', '登机中'],
+                ['3U8888', '四川航空', '成都', '杭州', '01/10 09:30', 'B04', '登机中']
+            ] : [];
+            
+            document.getElementById('tableBody').innerHTML = mockData.map(row => 
+                '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + 
+                '<td><button class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button></td></tr>'
+            ).join('');
+            
+            new bootstrap.Modal(document.getElementById('dataModal')).show();
+        };
+    </script>
+</body>
+</html>
