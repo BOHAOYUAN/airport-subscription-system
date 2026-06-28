@@ -2005,518 +2005,383 @@
     </script>
 
     <script>
-        // ==================== Three.js 3D Engine (Hollywood Sci-Fi Edition) ====================
+        // ==================== Three.js 3D Engine (Professional Enterprise Edition) ====================
         let scene, camera, renderer, controls, composer;
         let airportGroup, particleSystem, clock;
         let flightPaths = [];
         let dataRings = [];
         let volumetricLights = [];
         let airplaneMeshes = {};
-        let lightColorTarget = new THREE.Color(0x00ffff);
+        let lightColorTarget = new THREE.Color(0x00aaff);
         let particleSpeedMultiplier = 1;
         let radarSweep;
-        let hexGrid;
         
         function init3DScene() {
             try {
                 if (typeof THREE === 'undefined') {
-                    console.error('Three.js 未加载，尝试重新加载...');
+                    console.error('Three.js 未加载');
                     addLog('3D 引擎加载失败，请刷新页面', 'error');
                     return;
                 }
 
                 const canvas = document.getElementById('three-canvas');
                 const container = canvas.parentElement;
-                
                 const width = container.clientWidth || window.innerWidth * 0.5;
                 const height = container.clientHeight || window.innerHeight - 200;
                 
                 scene = new THREE.Scene();
-                scene.fog = new THREE.FogExp2(0x020810, 0.012);
-                scene.background = new THREE.Color(0x01050a); // Darker space black
+                // Professional dark navy background
+                scene.background = new THREE.Color(0x040b16); 
+                scene.fog = new THREE.FogExp2(0x040b16, 0.012);
                 
-                camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 2000);
-                camera.position.set(60, 45, 60);
+                camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
+                camera.position.set(50, 40, 50);
                 camera.lookAt(0, 0, 0);
                 
                 renderer = new THREE.WebGLRenderer({ 
                     canvas: canvas,
                     antialias: true,
-                    alpha: true,
-                    powerPreference: 'high-performance'
+                    alpha: true
                 });
                 renderer.setSize(width, height);
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                // High-end tone mapping
-                renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                renderer.toneMappingExposure = 1.5;
                 
                 if (THREE.OrbitControls) {
                     controls = new THREE.OrbitControls(camera, renderer.domElement);
                     controls.enableDamping = true;
-                    controls.dampingFactor = 0.04;
-                    controls.minDistance = 10;
-                    controls.maxDistance = 150;
-                    controls.maxPolarAngle = Math.PI / 2.1;
-                    controls.target.set(0, 0, 0);
-                    // Add subtle auto-rotation for cinematic feel
+                    controls.dampingFactor = 0.05;
+                    controls.minDistance = 20;
+                    controls.maxDistance = 120;
+                    controls.maxPolarAngle = Math.PI / 2.2;
                     controls.autoRotate = true;
-                    controls.autoRotateSpeed = 0.5;
+                    controls.autoRotateSpeed = 0.3; // Very slow, professional rotation
                 }
                 
                 clock = new THREE.Clock();
                 
-                if (THREE.EffectComposer && THREE.RenderPass && THREE.UnrealBloomPass) {
-                    setupPostProcessing();
-                } else {
-                    composer = null;
-                }
-                
+                // Add soft ambient and directional lighting
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene.add(ambientLight);
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                dirLight.position.set(20, 50, 20);
+                scene.add(dirLight);
+
                 createAirport();
-                createParticleSystem();
+                createDataFlows();
                 createFlightPaths();
-                createDataRings();
-                createCinematicEnvironment();
                 
                 window.addEventListener('resize', onWindowResize);
-                
                 animate();
-                addLog('全息数字孪生引擎(Hollywood Sci-Fi)已就绪', 'success');
+                addLog('企业级数字孪生底座加载完毕', 'success');
             } catch (error) {
                 console.error('3D 场景初始化失败:', error);
-                addLog('3D 引擎初始化失败: ' + error.message, 'error');
             }
-        }
-
-        function setupPostProcessing() {
-            composer = new THREE.EffectComposer(renderer);
-            const renderPass = new THREE.RenderPass(scene, camera);
-            composer.addPass(renderPass);
-            // Epic Bloom
-            const bloomPass = new THREE.UnrealBloomPass(
-                new THREE.Vector2(window.innerWidth, window.innerHeight),
-                2.2, // strength
-                0.8, // radius
-                0.2  // threshold (lower threshold for more glow)
-            );
-            composer.addPass(bloomPass);
-        }
-
-        function createCinematicEnvironment() {
-            // Massive ground radar sweep
-            const radarGeo = new THREE.CircleGeometry(80, 64);
-            const radarMat = new THREE.MeshBasicMaterial({
-                color: 0x00ffff,
-                transparent: true,
-                opacity: 0.15,
-                blending: THREE.AdditiveBlending,
-                side: THREE.DoubleSide,
-                depthWrite: false
-            });
-            radarSweep = new THREE.Mesh(radarGeo, radarMat);
-            radarSweep.rotation.x = -Math.PI / 2;
-            radarSweep.position.y = 0.1;
-            
-            // Sweep line
-            const sweepGeo = new THREE.PlaneGeometry(80, 2);
-            // move origin to end
-            sweepGeo.translate(40, 0, 0);
-            const sweepMat = new THREE.MeshBasicMaterial({
-                color: 0x00ffff,
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending,
-                side: THREE.DoubleSide,
-                depthWrite: false
-            });
-            const sweepLine = new THREE.Mesh(sweepGeo, sweepMat);
-            sweepLine.rotation.x = -Math.PI / 2;
-            sweepLine.position.y = 0.2;
-            radarSweep.add(sweepLine);
-            scene.add(radarSweep);
-
-            // Floating dust/stars
-            const dustGeo = new THREE.BufferGeometry();
-            const dustCount = 1500;
-            const dustPos = new Float32Array(dustCount * 3);
-            for(let i=0; i<dustCount*3; i++) {
-                dustPos[i] = (Math.random() - 0.5) * 200;
-            }
-            dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
-            const dustMat = new THREE.PointsMaterial({
-                color: 0xffffff,
-                size: 0.2,
-                transparent: true,
-                opacity: 0.4,
-                blending: THREE.AdditiveBlending
-            });
-            const dust = new THREE.Points(dustGeo, dustMat);
-            scene.add(dust);
-            scene.userData.dust = dust;
         }
 
         function createAirport() {
             airportGroup = new THREE.Group();
             
-            // High-tech Hex/Grid Ground
-            const gridGeo = new THREE.PlaneGeometry(150, 150, 60, 60);
-            const gridMat = new THREE.MeshBasicMaterial({
-                color: 0x0088ff,
-                wireframe: true,
-                transparent: true,
-                opacity: 0.15,
-                blending: THREE.AdditiveBlending
-            });
-            const grid = new THREE.Mesh(gridGeo, gridMat);
-            grid.rotation.x = -Math.PI / 2;
-            airportGroup.add(grid);
+            // Professional Tech Grid
+            const gridHelper = new THREE.GridHelper(120, 40, 0x004488, 0x002244);
+            gridHelper.position.y = 0;
+            gridHelper.material.opacity = 0.4;
+            gridHelper.material.transparent = true;
+            airportGroup.add(gridHelper);
             
-            // Solid dark base
-            const baseGeo = new THREE.CircleGeometry(90, 64);
-            const baseMat = new THREE.MeshBasicMaterial({
-                color: 0x010308,
+            // Clean base platform
+            const baseGeo = new THREE.CylinderGeometry(55, 55, 0.5, 64);
+            const baseMat = new THREE.MeshPhongMaterial({
+                color: 0x061224,
                 transparent: true,
-                opacity: 0.95
+                opacity: 0.9,
+                shininess: 30
             });
             const base = new THREE.Mesh(baseGeo, baseMat);
-            base.rotation.x = -Math.PI / 2;
-            base.position.y = -0.1;
+            base.position.y = -0.25;
             airportGroup.add(base);
+
+            // Subtle base edge glow
+            const edgeGeo = new THREE.TorusGeometry(55, 0.2, 16, 64);
+            const edgeMat = new THREE.MeshBasicMaterial({
+                color: 0x00aaff,
+                transparent: true,
+                opacity: 0.3
+            });
+            const edge = new THREE.Mesh(edgeGeo, edgeMat);
+            edge.rotation.x = Math.PI / 2;
+            airportGroup.add(edge);
+
+            // Radar sweep (subtle & professional)
+            const radarGeo = new THREE.CircleGeometry(54, 64);
+            const radarMat = new THREE.MeshBasicMaterial({
+                color: 0x00aaff,
+                transparent: true,
+                opacity: 0.05,
+                side: THREE.DoubleSide,
+                depthWrite: false
+            });
+            radarSweep = new THREE.Mesh(radarGeo, radarMat);
+            radarSweep.rotation.x = -Math.PI / 2;
+            radarSweep.position.y = 0.05;
             
-            // Glowing Runways
-            createCinematicRunway(-25, 0.1, 70, 4, 0.1);
-            createCinematicRunway(25, 0.1, 70, 4, -0.1);
+            const scanLineGeo = new THREE.PlaneGeometry(54, 0.5);
+            scanLineGeo.translate(27, 0, 0);
+            const scanLineMat = new THREE.MeshBasicMaterial({
+                color: 0x00aaff,
+                transparent: true,
+                opacity: 0.4,
+                side: THREE.DoubleSide
+            });
+            const scanLine = new THREE.Mesh(scanLineGeo, scanLineMat);
+            scanLine.rotation.x = -Math.PI / 2;
+            radarSweep.add(scanLine);
+            airportGroup.add(radarSweep);
+
+            // Clean, architectural runways
+            createProfessionalRunway(-20, 0.02, 60, 4);
+            createProfessionalRunway(20, 0.02, 60, 4);
             
-            // Sci-fi Terminals (Arcology style)
-            createArcologyTerminal(-10, 0, -15, 20, 'T1', 0x00ffff);
-            createArcologyTerminal(10, 0, 15, 15, 'T2', 0xff00ff);
+            // Clean glass-like terminals
+            createGlassTerminal(-5, 0, -10, 18, 3, 6, 'T1');
+            createGlassTerminal(5, 0, 10, 15, 3, 5, 'T2');
             
-            // Tower
-            createCyberTower(0, 0, 0);
+            // Modern ATC Tower
+            createModernTower(0, 0, 0);
             
             // Gates
             const gatePositions = [
-                { name: 'A01', x: -20, z: -10 }, { name: 'A02', x: -15, z: -8 },
-                { name: 'A03', x: -10, z: -6 },  { name: 'A04', x: -5, z: -4 },
-                { name: 'A05', x: 0, z: -2 },    { name: 'B01', x: 20, z: 10 },
-                { name: 'B02', x: 15, z: 8 },    { name: 'B03', x: 10, z: 6 },
-                { name: 'B04', x: 5, z: 4 },     { name: 'B05', x: 0, z: 2 },
-                { name: 'C01', x: 10, z: -20 },  { name: 'C02', x: 15, z: -15 }
+                { name: 'A01', x: -14, z: -7 }, { name: 'A02', x: -10, z: -7 },
+                { name: 'A03', x: -6, z: -7 },  { name: 'A04', x: -2, z: -7 },
+                { name: 'A05', x: 2, z: -7 },   { name: 'B01', x: 12, z: 7 },
+                { name: 'B02', x: 8, z: 7 },    { name: 'B03', x: 4, z: 7 },
+                { name: 'B04', x: 0, z: 7 },    { name: 'B05', x: -4, z: 7 },
+                { name: 'C01', x: 4, z: -13 },  { name: 'C02', x: 8, z: -10 }
             ];
             
             gatePositions.forEach(gate => {
-                createCyberGate(gate.x, 0, gate.z, gate.name);
-                state.cameraTargets[gate.name] = { x: gate.x, y: 5, z: gate.z };
+                createProfessionalGate(gate.x, 0, gate.z, gate.name);
+                state.cameraTargets[gate.name] = { x: gate.x, y: 3, z: gate.z };
             });
             
             scene.add(airportGroup);
         }
 
-        function createCinematicRunway(x, y, length, width, rotation) {
+        function createProfessionalRunway(x, y, length, width) {
             const runwayGroup = new THREE.Group();
             runwayGroup.position.set(x, y, 0);
-            runwayGroup.rotation.y = rotation;
             
             const runwayGeo = new THREE.PlaneGeometry(width, length);
-            const runwayMat = new THREE.MeshBasicMaterial({
-                color: 0x021122,
-                transparent: true,
-                opacity: 0.9,
-                depthWrite: false
+            const runwayMat = new THREE.MeshStandardMaterial({
+                color: 0x111b2b,
+                roughness: 0.8
             });
             const runway = new THREE.Mesh(runwayGeo, runwayMat);
             runway.rotation.x = -Math.PI / 2;
             runwayGroup.add(runway);
 
-            // Center neon line
-            const centerGeo = new THREE.PlaneGeometry(0.2, length);
-            const centerMat = new THREE.MeshBasicMaterial({
-                color: 0x00ffff,
+            // Center dash line
+            const centerGeo = new THREE.PlaneGeometry(0.1, length);
+            const centerMat = new THREE.LineDashedMaterial({
+                color: 0xffffff,
+                dashSize: 1,
+                gapSize: 1,
                 transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
+                opacity: 0.6
             });
-            const centerLine = new THREE.Mesh(centerGeo, centerMat);
+            const centerLine = new THREE.LineSegments(
+                new THREE.EdgesGeometry(centerGeo),
+                centerMat
+            );
+            centerLine.computeLineDistances();
             centerLine.rotation.x = -Math.PI / 2;
-            centerLine.position.y = 0.05;
+            centerLine.position.y = 0.01;
             runwayGroup.add(centerLine);
-
-            // Edge lights
-            for(let i=0; i<length; i+=4) {
-                const zPos = -length/2 + i;
-                const lightGeo = new THREE.PlaneGeometry(0.5, 0.1);
-                const lightMat = new THREE.MeshBasicMaterial({
-                    color: 0xffaa00,
-                    blending: THREE.AdditiveBlending
-                });
-                
-                const leftL = new THREE.Mesh(lightGeo, lightMat);
-                leftL.rotation.x = -Math.PI/2;
-                leftL.position.set(-width/2, 0.1, zPos);
-                
-                const rightL = new THREE.Mesh(lightGeo, lightMat);
-                rightL.rotation.x = -Math.PI/2;
-                rightL.position.set(width/2, 0.1, zPos);
-                
-                runwayGroup.add(leftL);
-                runwayGroup.add(rightL);
-            }
 
             airportGroup.add(runwayGroup);
         }
 
-        function createArcologyTerminal(x, y, z, radius, name, color) {
+        function createGlassTerminal(x, y, z, width, height, depth, name) {
             const terminalGroup = new THREE.Group();
-            terminalGroup.position.set(x, y, z);
+            terminalGroup.position.set(x, y + height/2, z);
 
-            // Dome
-            const domeGeo = new THREE.IcosahedronGeometry(radius, 2);
-            // Flatten bottom
-            const pos = domeGeo.attributes.position;
-            for(let i=0; i<pos.count; i++) {
-                if (pos.getY(i) < 0) pos.setY(i, 0);
-            }
-            // Scale Y to make it flat
-            domeGeo.scale(1, 0.3, 1);
-            
-            const domeMat = new THREE.MeshBasicMaterial({
-                color: 0x0a1a3a,
+            // Glass body
+            const bodyGeo = new THREE.BoxGeometry(width, height, depth);
+            const bodyMat = new THREE.MeshPhongMaterial({
+                color: 0x0055aa,
                 transparent: true,
-                opacity: 0.7,
-                wireframe: true
+                opacity: 0.2,
+                shininess: 90
             });
-            const dome = new THREE.Mesh(domeGeo, domeMat);
-            terminalGroup.add(dome);
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            terminalGroup.add(body);
 
-            // Inner solid glow
-            const innerDomeGeo = new THREE.IcosahedronGeometry(radius * 0.98, 2);
-            innerDomeGeo.scale(1, 0.3, 1);
-            const innerMat = new THREE.MeshBasicMaterial({
-                color: color,
+            // Precise edges
+            const edges = new THREE.EdgesGeometry(bodyGeo);
+            const edgeMat = new THREE.LineBasicMaterial({
+                color: 0x00aaff,
                 transparent: true,
-                opacity: 0.15,
-                blending: THREE.AdditiveBlending
+                opacity: 0.8
             });
-            const innerDome = new THREE.Mesh(innerDomeGeo, innerMat);
-            
-            // Flat bottom
-            const pos2 = innerDomeGeo.attributes.position;
-            for(let i=0; i<pos2.count; i++) {
-                if (pos2.getY(i) < 0) pos2.setY(i, 0);
-            }
-            terminalGroup.add(innerDome);
-
-            // Ring around terminal
-            const ringGeo = new THREE.TorusGeometry(radius * 1.1, 0.2, 16, 64);
-            const ringMat = new THREE.MeshBasicMaterial({
-                color: color,
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
-            });
-            const ring = new THREE.Mesh(ringGeo, ringMat);
-            ring.rotation.x = Math.PI/2;
-            ring.position.y = 0.5;
-            terminalGroup.add(ring);
+            const outline = new THREE.LineSegments(edges, edgeMat);
+            terminalGroup.add(outline);
 
             airportGroup.add(terminalGroup);
         }
 
-        function createCyberTower(x, y, z) {
+        function createModernTower(x, y, z) {
             const towerGroup = new THREE.Group();
             towerGroup.position.set(x, y, z);
 
-            // Spire
-            const spireGeo = new THREE.CylinderGeometry(0.5, 4, 25, 6);
-            const spireMat = new THREE.MeshBasicMaterial({
-                color: 0x051020,
+            // Base shaft
+            const shaftGeo = new THREE.CylinderGeometry(1.5, 2, 12, 16);
+            const shaftMat = new THREE.MeshPhongMaterial({
+                color: 0x002244,
                 transparent: true,
-                opacity: 0.9,
-                wireframe: false
+                opacity: 0.8
             });
-            const spire = new THREE.Mesh(spireGeo, spireMat);
-            spire.position.y = 12.5;
-            towerGroup.add(spire);
-            
-            const wireSpireMat = new THREE.MeshBasicMaterial({
-                color: 0x00ffff,
-                transparent: true,
-                opacity: 0.5,
-                wireframe: true,
-                blending: THREE.AdditiveBlending
-            });
-            const wireSpire = new THREE.Mesh(spireGeo, wireSpireMat);
-            wireSpire.position.y = 12.5;
-            wireSpire.scale.set(1.02, 1.02, 1.02);
-            towerGroup.add(wireSpire);
+            const shaft = new THREE.Mesh(shaftGeo, shaftMat);
+            shaft.position.y = 6;
+            towerGroup.add(shaft);
 
-            // Floating control room
-            const roomGeo = new THREE.OctahedronGeometry(4, 0);
-            roomGeo.scale(1, 0.5, 1);
-            const roomMat = new THREE.MeshBasicMaterial({
-                color: 0x00ffff,
+            const edges = new THREE.EdgesGeometry(shaftGeo);
+            const edgeMat = new THREE.LineBasicMaterial({ color: 0x00aaff, opacity: 0.5, transparent: true });
+            const outline = new THREE.LineSegments(edges, edgeMat);
+            outline.position.y = 6;
+            towerGroup.add(outline);
+
+            // Control Room
+            const roomGeo = new THREE.CylinderGeometry(3, 2, 2, 16);
+            const roomMat = new THREE.MeshPhongMaterial({
+                color: 0x0066cc,
                 transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
+                opacity: 0.4,
+                shininess: 100
             });
             const room = new THREE.Mesh(roomGeo, roomMat);
-            room.position.y = 20;
+            room.position.y = 13;
             towerGroup.add(room);
-            
-            // Holographic data beam from tower
-            const beamGeo = new THREE.CylinderGeometry(0.2, 0.2, 50, 8);
-            const beamMat = new THREE.MeshBasicMaterial({
-                color: 0xff00ff,
-                transparent: true,
-                opacity: 0.6,
-                blending: THREE.AdditiveBlending
-            });
-            const beam = new THREE.Mesh(beamGeo, beamMat);
-            beam.position.y = 45;
-            towerGroup.add(beam);
+
+            // Dome top
+            const topGeo = new THREE.SphereGeometry(3, 16, 16, 0, Math.PI * 2, 0, Math.PI/2);
+            const topMat = new THREE.MeshPhongMaterial({ color: 0x112233 });
+            const top = new THREE.Mesh(topGeo, topMat);
+            top.position.y = 14;
+            top.scale.y = 0.3;
+            towerGroup.add(top);
 
             airportGroup.add(towerGroup);
         }
 
-        function createCyberGate(x, y, z, name) {
+        function createProfessionalGate(x, y, z, name) {
             const gateGroup = new THREE.Group();
-            gateGroup.position.set(x, y, z);
+            gateGroup.position.set(x, y + 0.1, z);
 
-            // Base pad
-            const padGeo = new THREE.CircleGeometry(2.5, 16);
-            const padMat = new THREE.MeshBasicMaterial({
-                color: 0x0088ff,
+            // Simple clean marker
+            const markerGeo = new THREE.CircleGeometry(1, 16);
+            const markerMat = new THREE.MeshBasicMaterial({
+                color: 0x00aaff,
                 transparent: true,
-                opacity: 0.4,
-                blending: THREE.AdditiveBlending
+                opacity: 0.2
             });
-            const pad = new THREE.Mesh(padGeo, padMat);
-            pad.rotation.x = -Math.PI / 2;
-            pad.position.y = 0.1;
-            gateGroup.add(pad);
+            const marker = new THREE.Mesh(markerGeo, markerMat);
+            marker.rotation.x = -Math.PI / 2;
+            gateGroup.add(marker);
 
-            // Inner pad glow
-            const innerGeo = new THREE.CircleGeometry(1.5, 16);
-            const innerMat = new THREE.MeshBasicMaterial({
-                color: 0x00ffff,
+            const ringGeo = new THREE.RingGeometry(0.9, 1, 16);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: 0x00aaff,
                 transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
+                opacity: 0.6
             });
-            const inner = new THREE.Mesh(innerGeo, innerMat);
-            inner.rotation.x = -Math.PI / 2;
-            inner.position.y = 0.15;
-            gateGroup.add(inner);
-            
-            // Vertical data link
-            const linkGeo = new THREE.CylinderGeometry(0.1, 0.1, 2, 8);
-            const linkMat = new THREE.MeshBasicMaterial({
-                color: 0x00ffff,
-                transparent: true,
-                opacity: 0.5,
-                blending: THREE.AdditiveBlending
-            });
-            const link = new THREE.Mesh(linkGeo, linkMat);
-            link.position.y = 1;
-            gateGroup.add(link);
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = -Math.PI / 2;
+            gateGroup.add(ring);
 
             airportGroup.add(gateGroup);
         }
 
-        function createAirplaneMesh(flightNo, color = 0x00ffff) {
-            const airplaneGroup = new THREE.Group();
+        // Professional realistic airplane model representation
+        function createAirplaneMesh(flightNo, statusColor = 0xffffff) {
+            const group = new THREE.Group();
             
-            // Sleek Sci-Fi Jet (Delta Wing)
-            const shape = new THREE.Shape();
-            shape.moveTo(0, 2);    // Nose
-            shape.lineTo(-1.5, -2); // Left wing
-            shape.lineTo(0, -1);   // Back center
-            shape.lineTo(1.5, -2);  // Right wing
-            shape.lineTo(0, 2);    // Back to nose
-            
-            const extrudeSettings = { depth: 0.2, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.05, bevelThickness: 0.05 };
-            const jetGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-            
-            // Rotate shape to face forward correctly
-            jetGeo.rotateX(Math.PI / 2);
-            jetGeo.translate(0, 0.1, 0);
-            
-            const jetMat = new THREE.MeshBasicMaterial({
-                color: 0x112233,
-                transparent: true,
-                opacity: 0.95
+            // Main Fuselage (Commercial Airliner shape)
+            const fuselageGeo = new THREE.CylinderGeometry(0.3, 0.3, 3, 16);
+            fuselageGeo.rotateZ(Math.PI / 2);
+            const bodyMat = new THREE.MeshPhongMaterial({
+                color: 0xffffff,
+                shininess: 80
             });
-            const jet = new THREE.Mesh(jetGeo, jetMat);
-            airplaneGroup.add(jet);
+            const fuselage = new THREE.Mesh(fuselageGeo, bodyMat);
+            group.add(fuselage);
             
-            // Wireframe outline for tech look
-            const edges = new THREE.EdgesGeometry(jetGeo);
-            const edgeMat = new THREE.LineBasicMaterial({
-                color: color,
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
-            });
-            const outline = new THREE.LineSegments(edges, edgeMat);
-            airplaneGroup.add(outline);
+            // Nose
+            const noseGeo = new THREE.SphereGeometry(0.3, 16, 16);
+            noseGeo.scale(1.5, 1, 1);
+            const nose = new THREE.Mesh(noseGeo, bodyMat);
+            nose.position.x = 1.5;
+            group.add(nose);
+            
+            // Tail Cone
+            const tailConeGeo = new THREE.ConeGeometry(0.3, 0.8, 16);
+            tailConeGeo.rotateZ(-Math.PI / 2);
+            const tailCone = new THREE.Mesh(tailConeGeo, bodyMat);
+            tailCone.position.x = -1.5;
+            group.add(tailCone);
 
-            // Engine Thrusters
-            const thrusterGeo = new THREE.SphereGeometry(0.3, 8, 8);
-            const thrusterMat = new THREE.MeshBasicMaterial({
-                color: 0xffaa00,
-                transparent: true,
-                opacity: 0.9,
-                blending: THREE.AdditiveBlending
-            });
-            const leftT = new THREE.Mesh(thrusterGeo, thrusterMat);
-            leftT.position.set(-0.6, 0.1, 1.2);
-            // Scale Z for elongated glow
-            leftT.scale.set(1, 1, 3);
-            airplaneGroup.add(leftT);
+            // Main Wings
+            const wingGeo = new THREE.BoxGeometry(1, 0.05, 3.5);
+            const wingMat = new THREE.MeshPhongMaterial({ color: 0xdddddd });
+            const wings = new THREE.Mesh(wingGeo, wingMat);
+            wings.position.set(0, 0, 0);
             
-            const rightT = new THREE.Mesh(thrusterGeo, thrusterMat);
-            rightT.position.set(0.6, 0.1, 1.2);
-            rightT.scale.set(1, 1, 3);
-            airplaneGroup.add(rightT);
+            // Sweep wings back
+            const positions = wingGeo.attributes.position.array;
+            for(let i=0; i<positions.length; i+=3) {
+                if (Math.abs(positions[i+2]) > 0.5) {
+                    positions[i] -= 0.5; // push back outer edges
+                }
+            }
+            wingGeo.computeVertexNormals();
+            group.add(wings);
 
-            airplaneGroup.userData = { flightNo, isAirplane: true };
-            airplaneMeshes[flightNo] = airplaneGroup;
+            // Tail Fin
+            const finGeo = new THREE.BoxGeometry(0.6, 1.2, 0.05);
+            const finMat = new THREE.MeshPhongMaterial({ color: statusColor }); // Tail colored by status
+            const fin = new THREE.Mesh(finGeo, finMat);
+            fin.position.set(-1.2, 0.6, 0);
             
-            // Scale it up slightly
-            airplaneGroup.scale.set(1.5, 1.5, 1.5);
-            return airplaneGroup;
+            const finPos = finGeo.attributes.position.array;
+            for(let i=0; i<finPos.length; i+=3) {
+                if (finPos[i+1] > 0) finPos[i] -= 0.3;
+            }
+            finGeo.computeVertexNormals();
+            group.add(fin);
+
+            group.userData = { flightNo, isAirplane: true };
+            airplaneMeshes[flightNo] = group;
+            group.scale.set(1.2, 1.2, 1.2);
+            return group;
         }
 
-        function createParticleSystem() {
-            // Flowing data streams (thousands of particles)
-            const particleCount = 4000;
+        function createDataFlows() {
+            // Subtle data points moving around the base
+            const particleCount = 200;
             const geometry = new THREE.BufferGeometry();
             const positions = new Float32Array(particleCount * 3);
-            const colors = new Float32Array(particleCount * 3);
-            
-            const color1 = new THREE.Color(0x00ffff);
-            const color2 = new THREE.Color(0xff00ff);
             
             for (let i = 0; i < particleCount; i++) {
-                positions[i*3] = (Math.random() - 0.5) * 150;
-                positions[i*3 + 1] = Math.random() * 40;
-                positions[i*3 + 2] = (Math.random() - 0.5) * 150;
-                
-                const c = Math.random() > 0.5 ? color1 : color2;
-                colors[i*3] = c.r;
-                colors[i*3+1] = c.g;
-                colors[i*3+2] = c.b;
+                positions[i*3] = (Math.random() - 0.5) * 80;
+                positions[i*3 + 1] = Math.random() * 5;
+                positions[i*3 + 2] = (Math.random() - 0.5) * 80;
             }
             
             geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
             
             const material = new THREE.PointsMaterial({
-                size: 0.6,
-                vertexColors: true,
+                color: 0x00aaff,
+                size: 0.3,
                 transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
+                opacity: 0.4
             });
             
             particleSystem = new THREE.Points(geometry, material);
@@ -2525,11 +2390,9 @@
 
         function createFlightPaths() {
             const pathConfigs = [
-                { start: new THREE.Vector3(-60, 25, -50), end: new THREE.Vector3(15, 2, -15), color: 0x00ffff, flightNo: 'CA1234' },
-                { start: new THREE.Vector3(60, 30, 40), end: new THREE.Vector3(-10, 2, 15), color: 0x00ff88, flightNo: 'MU5678' },
-                { start: new THREE.Vector3(-50, 28, 50), end: new THREE.Vector3(20, 2, 10), color: 0x8844ff, flightNo: 'CZ3456' },
-                { start: new THREE.Vector3(55, 22, -45), end: new THREE.Vector3(-5, 2, -4), color: 0xffaa00, flightNo: 'HU7890' },
-                { start: new THREE.Vector3(-65, 32, 20), end: new THREE.Vector3(0, 2, 2), color: 0xff00ff, flightNo: '3U8888' }
+                { start: new THREE.Vector3(-40, 15, -30), end: new THREE.Vector3(14, 0.5, -7), color: 0x00aaff, flightNo: 'CA1234' },
+                { start: new THREE.Vector3(40, 20, 20), end: new THREE.Vector3(-4, 0.5, 7), color: 0x00ff88, flightNo: 'MU5678' },
+                { start: new THREE.Vector3(-30, 18, 40), end: new THREE.Vector3(8, 0.5, 7), color: 0x8844ff, flightNo: 'CZ3456' }
             ];
             
             pathConfigs.forEach(config => {
@@ -2540,41 +2403,37 @@
         function createFlightPath(start, end, color, flightNo) {
             const midPoint = new THREE.Vector3(
                 (start.x + end.x) / 2,
-                Math.max(start.y, end.y) + 15, // Higher arc
+                Math.max(start.y, end.y) + 12,
                 (start.z + end.z) / 2
             );
             
             const curve = new THREE.QuadraticBezierCurve3(start, midPoint, end);
             
-            // Glowing Trajectory Arc
-            const points = curve.getPoints(80);
-            const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
-            const lineMaterial = new THREE.LineBasicMaterial({
+            // Clean Trajectory Line
+            const points = curve.getPoints(50);
+            const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+            const lineMat = new THREE.LineBasicMaterial({
                 color: color,
                 transparent: true,
-                opacity: 0.15,
-                blending: THREE.AdditiveBlending
+                opacity: 0.2
             });
-            const line = new THREE.Line(lineGeometry, lineMaterial);
+            const line = new THREE.Line(lineGeo, lineMat);
             scene.add(line);
             
             const airplane = createAirplaneMesh(flightNo, color);
             airplane.position.copy(start);
             scene.add(airplane);
             
-            // Dynamic Trail
-            const trailGeometry = new THREE.BufferGeometry();
-            const trailCount = 40;
-            const trailPositions = new Float32Array(trailCount * 3);
-            trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
-            const trailMaterial = new THREE.LineBasicMaterial({
+            // Subtle Trail
+            const trailGeo = new THREE.BufferGeometry();
+            const trailPositions = new Float32Array(20 * 3);
+            trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+            const trailMat = new THREE.LineBasicMaterial({
                 color: color,
                 transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending,
-                linewidth: 2 // WebGL might ignore this, but good intent
+                opacity: 0.5
             });
-            const trail = new THREE.Line(trailGeometry, trailMaterial);
+            const trail = new THREE.Line(trailGeo, trailMat);
             scene.add(trail);
             
             flightPaths.push({
@@ -2582,54 +2441,9 @@
                 airplane,
                 trail,
                 progress: Math.random(),
-                speed: 0.0015 + Math.random() * 0.001,
+                speed: 0.001 + Math.random() * 0.001,
                 flightNo,
                 color
-            });
-        }
-
-        function createDataRings() {
-            // Massive holographic data rings surrounding the airport
-            const ringRadii = [60, 70, 80];
-            
-            ringRadii.forEach((radius, index) => {
-                const ringGeometry = new THREE.RingGeometry(radius - 0.5, radius, 128);
-                const ringMaterial = new THREE.MeshBasicMaterial({
-                    color: index === 0 ? 0x00ffff : index === 1 ? 0x00ff88 : 0xff00ff,
-                    transparent: true,
-                    opacity: 0.1,
-                    side: THREE.DoubleSide,
-                    blending: THREE.AdditiveBlending
-                });
-                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-                ring.rotation.x = -Math.PI / 2;
-                ring.position.y = 1 + index * 2;
-                scene.add(ring);
-                
-                // Add inner dotted dashed lines
-                const dashGeo = new THREE.TorusGeometry(radius, 0.1, 8, 100);
-                const dashMat = new THREE.LineDashedMaterial({
-                    color: ringMaterial.color,
-                    dashSize: 2,
-                    gapSize: 1,
-                    transparent: true,
-                    opacity: 0.5,
-                    blending: THREE.AdditiveBlending
-                });
-                const dashLines = new THREE.LineSegments(
-                    new THREE.EdgesGeometry(dashGeo),
-                    dashMat
-                );
-                dashLines.computeLineDistances();
-                dashLines.rotation.x = -Math.PI / 2;
-                dashLines.position.y = ring.position.y;
-                scene.add(dashLines);
-
-                dataRings.push({
-                    mesh: ring,
-                    dash: dashLines,
-                    speed: 0.001 * (index + 1) * (index % 2 === 0 ? 1 : -1)
-                });
             });
         }
 
@@ -2644,33 +2458,36 @@
             }
             
             const startPos = new THREE.Vector3(
-                target.x + (Math.random() - 0.5) * 80,
-                40,
-                target.z + (Math.random() - 0.5) * 80
+                target.x + (Math.random() - 0.5) * 60,
+                30,
+                target.z + (Math.random() - 0.5) * 60
             );
             airplane.position.copy(startPos);
             airplane.visible = true;
             
             if (typeof TWEEN !== 'undefined') {
                 new TWEEN.Tween(airplane.position)
-                    .to({ x: target.x + 30, y: 15, z: target.z + 30 }, 4000)
+                    .to({ x: target.x + 20, y: 10, z: target.z + 20 }, 3000)
                     .easing(TWEEN.Easing.Quadratic.Out)
                     .onUpdate(() => {
-                        const targetLook = new THREE.Vector3(target.x, target.y, target.z);
-                        airplane.lookAt(targetLook);
-                        sendPositionToDirector(flightNo, airplane.position.x, airplane.position.y, airplane.position.z, airplane.rotation.y, 'landing');
+                        airplane.lookAt(target.x, target.y, target.z);
+                        if(typeof sendPositionToDirector === 'function') {
+                            sendPositionToDirector(flightNo, airplane.position.x, airplane.position.y, airplane.position.z, airplane.rotation.y, 'landing');
+                        }
                     })
                     .start()
                     .chain(
                         new TWEEN.Tween(airplane.position)
-                            .to({ x: target.x, y: target.y + 1, z: target.z }, 3000)
+                            .to({ x: target.x, y: 0.5, z: target.z }, 2000)
                             .easing(TWEEN.Easing.Quadratic.InOut)
                             .onUpdate(() => {
-                                sendPositionToDirector(flightNo, airplane.position.x, airplane.position.y, airplane.position.z, airplane.rotation.y, 'landing');
+                                if(typeof sendPositionToDirector === 'function') {
+                                    sendPositionToDirector(flightNo, airplane.position.x, airplane.position.y, airplane.position.z, airplane.rotation.y, 'landing');
+                                }
                             })
                             .onComplete(() => {
-                                activateVolumetricLight(gateName, 6000);
-                                addLog(`${flightNo} 已降落至 ${gateName}`, 'success');
+                                activateDataHighlight(gateName);
+                                addLog(`${flightNo} 已停靠 ${gateName}`, 'success');
                             })
                     );
             }
@@ -2686,79 +2503,64 @@
                 scene.add(airplane);
             }
             
-            airplane.position.set(target.x, target.y + 1, target.z);
+            airplane.position.set(target.x, 0.5, target.z);
             airplane.visible = true;
             
             if (typeof TWEEN !== 'undefined') {
                 new TWEEN.Tween(airplane.position)
-                    .to({ x: target.x + 15, y: 5, z: target.z }, 2500)
+                    .to({ x: target.x + 10, y: 3, z: target.z }, 2000)
                     .easing(TWEEN.Easing.Quadratic.In)
                     .onUpdate(() => {
-                        sendPositionToDirector(flightNo, airplane.position.x, airplane.position.y, airplane.position.z, airplane.rotation.y, 'departed');
+                        if(typeof sendPositionToDirector === 'function') {
+                            sendPositionToDirector(flightNo, airplane.position.x, airplane.position.y, airplane.position.z, airplane.rotation.y, 'departed');
+                        }
                     })
                     .start()
                     .chain(
                         new TWEEN.Tween(airplane.position)
-                            .to({ x: target.x + 80, y: 40, z: target.z + 50 }, 4000)
+                            .to({ x: target.x + 60, y: 30, z: target.z + 40 }, 3000)
                             .easing(TWEEN.Easing.Quadratic.Out)
                             .onUpdate(() => {
-                                airplane.rotation.x = -0.4;
-                                sendPositionToDirector(flightNo, airplane.position.x, airplane.position.y, airplane.position.z, airplane.rotation.y, 'departed');
+                                airplane.rotation.x = -0.3;
+                                if(typeof sendPositionToDirector === 'function') {
+                                    sendPositionToDirector(flightNo, airplane.position.x, airplane.position.y, airplane.position.z, airplane.rotation.y, 'departed');
+                                }
                             })
                             .onComplete(() => {
                                 airplane.visible = false;
-                                addLog(`${flightNo} 已离开空域`, 'info');
+                                addLog(`${flightNo} 已离港`, 'info');
                             })
                     );
-                
-                activateVolumetricLight(gateName, 4000);
             }
         }
 
-        function activateVolumetricLight(gateName, duration = 5000) {
+        // Clean data highlight instead of giant laser beam
+        function activateDataHighlight(gateName, duration = 4000) {
             const target = state.cameraTargets[gateName];
             if (!target) return;
             
-            // Giant energy beam
-            const beamGeometry = new THREE.CylinderGeometry(1.5, 4, 60, 32, 1, true);
-            const beamMaterial = new THREE.MeshBasicMaterial({
+            const ringGeo = new THREE.RingGeometry(1.5, 2, 32);
+            const ringMat = new THREE.MeshBasicMaterial({
                 color: lightColorTarget,
                 transparent: true,
-                opacity: 0,
-                side: THREE.DoubleSide,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false
+                opacity: 0.8,
+                side: THREE.DoubleSide
             });
-            const beam = new THREE.Mesh(beamGeometry, beamMaterial);
-            beam.position.set(target.x, target.y + 30, target.z);
-            scene.add(beam);
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.set(target.x, 0.2, target.z);
+            scene.add(ring);
             
-            // Inner core beam
-            const coreGeometry = new THREE.CylinderGeometry(0.5, 0.5, 60, 16, 1, true);
-            const coreMaterial = new THREE.MeshBasicMaterial({
-                color: 0xffffff,
-                transparent: true,
-                opacity: 0,
-                blending: THREE.AdditiveBlending
-            });
-            const core = new THREE.Mesh(coreGeometry, coreMaterial);
-            beam.add(core);
-
             volumetricLights.push({
-                mesh: beam,
-                core: core,
+                mesh: ring,
                 startTime: Date.now(),
                 duration,
                 gateName
             });
             
-            sendLightBeamToDirector(gateName, true, '#00ffff', 1.0);
-            
-            if (state.audioEnabled && state.audioContext) {
-                playEnergySound();
+            if(typeof sendLightBeamToDirector === 'function') {
+                sendLightBeamToDirector(gateName, true, '#00aaff', 0.5);
             }
-            
-            addLog(`>> ${gateName} 量子跃迁光柱激活`, 'prediction');
         }
 
         function onWindowResize() {
@@ -2766,57 +2568,36 @@
             camera.aspect = container.clientWidth / container.clientHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(container.clientWidth, container.clientHeight);
-            if (composer) {
-                composer.setSize(container.clientWidth, container.clientHeight);
-            }
         }
 
         function animate() {
             requestAnimationFrame(animate);
             
-            const delta = clock ? clock.getDelta() : 0.016;
             const elapsed = clock ? clock.getElapsedTime() : 0;
             
             if (controls) {
-                controls.update(); // autoRotate needs update
+                controls.update();
             }
             
             if (typeof TWEEN !== 'undefined') {
                 TWEEN.update();
             }
             
-            // Cinematic Radar Sweep
             if (radarSweep) {
-                radarSweep.rotation.z -= 0.015; // Sweep speed
-            }
-            
-            // Floating dust
-            if (scene && scene.userData.dust) {
-                scene.userData.dust.rotation.y += 0.0005;
-                scene.userData.dust.rotation.x += 0.0002;
+                radarSweep.rotation.z -= 0.01; // Smooth slow scan
             }
 
-            // High-tech particles
             if (particleSystem) {
                 const positions = particleSystem.geometry.attributes.position.array;
                 for (let i = 0; i < positions.length; i += 3) {
-                    // Upward streaming data
-                    positions[i + 1] += 0.1 * particleSpeedMultiplier;
-                    
-                    // Sine wave drift
-                    positions[i] += Math.sin(elapsed * 2 + i) * 0.05 * particleSpeedMultiplier;
-                    positions[i + 2] += Math.cos(elapsed * 2 + i) * 0.05 * particleSpeedMultiplier;
-                    
-                    if (positions[i + 1] > 40) {
+                    positions[i + 1] += 0.02 * particleSpeedMultiplier;
+                    if (positions[i + 1] > 15) {
                         positions[i + 1] = 0;
-                        positions[i] = (Math.random() - 0.5) * 150;
-                        positions[i + 2] = (Math.random() - 0.5) * 150;
                     }
                 }
                 particleSystem.geometry.attributes.position.needsUpdate = true;
             }
             
-            // Flight Paths
             flightPaths.forEach(path => {
                 path.progress += path.speed * particleSpeedMultiplier;
                 if (path.progress > 1) path.progress = 0;
@@ -2839,41 +2620,24 @@
                 path.trail.geometry.attributes.position.needsUpdate = true;
             });
             
-            // Data Rings
-            dataRings.forEach(ring => {
-                ring.mesh.rotation.z += ring.speed;
-                ring.dash.rotation.z -= ring.speed * 1.5;
-            });
-            
-            // Volumetric Beams
             volumetricLights = volumetricLights.filter(light => {
                 const elapsedTime = Date.now() - light.startTime;
                 const progress = elapsedTime / light.duration;
                 
-                if (progress < 0.2) {
-                    light.mesh.material.opacity = progress * 5 * 0.4;
-                    light.core.material.opacity = progress * 5 * 0.8;
-                } else if (progress < 0.8) {
-                    light.mesh.material.opacity = 0.4 + Math.sin(elapsed * 10) * 0.1; // pulse
-                    light.core.material.opacity = 0.8 + Math.sin(elapsed * 20) * 0.2;
-                } else if (progress < 1) {
-                    light.mesh.material.opacity = (1 - progress) * 5 * 0.4;
-                    light.core.material.opacity = (1 - progress) * 5 * 0.8;
+                if (progress < 1) {
+                    light.mesh.scale.set(1 + progress, 1 + progress, 1);
+                    light.mesh.material.opacity = (1 - progress) * 0.8;
+                    return true;
                 } else {
                     scene.remove(light.mesh);
-                    sendLightBeamToDirector(light.gateName, false, '#00ffff', 0);
+                    if(typeof sendLightBeamToDirector === 'function') {
+                        sendLightBeamToDirector(light.gateName, false, '#00aaff', 0);
+                    }
                     return false;
                 }
-                
-                light.mesh.material.color.lerp(lightColorTarget, 0.05);
-                return true;
             });
             
-            if (composer) {
-                composer.render();
-            } else {
-                renderer.render(scene, camera);
-            }
+            renderer.render(scene, camera);
         }
     </script>
 
