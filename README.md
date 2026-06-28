@@ -1,107 +1,66 @@
-# Aurora-Panel: 多用户中转与订阅管理系统 (Airport Management System)
+# AeroTwin: 3D 机场数字孪生与运行管控系统 (Spring Boot + Three.js + DeepSeek)
 
-Aurora-Panel 是一款专为高速网络中转服务商（“机场”运营者）设计的**多用户订阅管理与流量计费系统**。系统采用前后端分离架构，前端使用 React/Vue 提供极致流畅的用户交互，后端基于 PHP (Laravel) / Python (FastAPI) 提供强大的高并发 API 支撑，并深度整合 Xray, Hysteria 2, Shadowsocks 等主流代理协议内核。
+AeroTwin 是一款基于 **Spring Boot**、**Three.js (WebGL)** 和 **DeepSeek API** 架构构建的**三维物理机场数字孪生与智能化运行可视化大屏系统**。系统通过对机场航站楼、跑道、机坪车辆及航班状态进行 1:1 三维数字化仿真，并结合 WebSocket 实时遥测数据与 DeepSeek 智能辅助决策，实现机场运行调度与客流态势感知的一屏管控。
 
 ---
 
-## 🏗️ 系统架构图 (System Architecture)
+## 🏗️ 机场数字孪生系统架构图
 
 ```mermaid
 graph TD
-    Client[用户客户端 Clash/Shadowrocket] -->|1. 获取订阅链接| WebUI[用户前端面板 React/Vue]
-    WebUI -->|2. 读取数据库| MySQL[(MySQL 核心数据)]
-    WebUI -->|3. 高频缓存与限流| Redis[(Redis 缓存层)]
+    Sensor[ADS-B 航班流 / 车辆 GPS / 摄像头客流] -->|MQTT/TCP| SpringBoot[Spring Boot 核心后端]
     
-    MySQL -->|4. 定时同步用户流量与配置| NodeDaemon[节点后端同步守护进程 Daemon]
-    NodeDaemon -->|5. 下发最新策略与节点限制| XrayCore[代理内核 Xray/Hysteria2/Trojan]
+    SpringBoot -->|1. 实时数据推送 WebSocket| WebUI[用户前端 3D 大屏 Three.js]
+    SpringBoot -->|2. 时序持久化| MySQL[(MySQL / TimeScaleDB)]
+    SpringBoot -->|3. 航班流异常与停机位优化| DeepSeek[DeepSeek API 智能决策]
     
-    Client -->|6. 连接节点进行中转代理| XrayCore
-    XrayCore -->|7. 统计流量回传| NodeDaemon
+    DeepSeek -->|4. 返回最佳停机位与廊桥分配策略| SpringBoot
+    WebUI -->|5. 反向控制助航灯光/廊桥对接| SpringBoot
 ```
 
 ---
 
-## 🌟 核心功能特性
+## 🌟 核心功能系统
 
-### 1. 多协议内核与传输加速支持
-* **核心协议**：支持 **VLESS Reality (TCP/XTLS)**、**VMess (WS/gRPC)**、**Trojan (gRPC)**，并深度集成最新高吞吐率低延迟的 **Hysteria 2** 与 **TUIC** 协议。
-* **分流与中转**：支持公网隧道中转（端口转发）、经典单机中转和多级节点路由，满足不同网络环境下的加速需求。
+### 1. 飞行区机坪运行数字孪生 (Airfield Operations Twin)
+* **航班实时动态仿真**：接收 WebSocket 航班状态，在 3D 机坪跑道上动态模拟飞机的落地、转弯滑行及起飞过程，实时显示高度与航向角。
+* **机坪特种车辆（GSE）GPS 追踪**：实时展示行李车、摆渡车、加油车在三维场景中的物理位置与移动轨迹，支持车辆防碰撞预警。
 
-### 2. 自动化订阅转换系统 (Built-in Subconverter)
-* 系统内置高性能订阅转换引擎，将统一的节点配置格式动态生成为不同客户端适配的专属配置，一键下发到 **Clash Verge, Shadowrocket, Quantumult X, Surge, Loon, v2rayN** 等客户端。
+### 2. 航站楼旅客流量热力图 (Terminal Passenger Flow Heatmap)
+* **基于 Shader 的空间热力渲染**：利用 Three.js 自定义着色器（Custom Shader），将安检柜台与值机口的实时客流排队数据转化为航站楼 3D 空间内的客流拥挤度渐变热力图，预警拥堵。
 
-### 3. 多渠道支付与计费周期管理
-* **财务面板**：支持设置按月、按年、一次性或按流量计费的阶梯式套餐，支持优惠券、邀请返利和新用户首单优惠。
-* **支付集成**：支持微信/支付宝官方接口、易支付（Epays）三方聚合支付、以及加密货币支付网关，支持全自动付款激活回调。
+### 3. 行李分拣输送仿真孪生 (Baggage Handling System Twin)
+* **BHS 分拣流水线仿真**：三维动画仿真行李箱在输送带上的流动路径，当发生行李滑槽堵塞时，3D 界面自动闪烁红色警报，并支持点击调取视频监控。
 
-### 4. 节点守护进程 (Daemon) 与流量统计
-* 后端分布式节点监控守护进程定时以秒级频率（5-10s）与主站 MySQL 数据库/Redis 缓存通信，同步用户流量额度、速率限制、IP 连接数，当用户流量超出或到期时，毫秒级实现节点阻断。
+### 4. 跑道助航灯光控制与天气粒子系统 (Runway Lighting & Weather)
+* **跑道灯光模拟**：1:1 仿真跑道入口灯、PAPI 坡度灯状态，支持从 3D 界面一键下发指令反向控制物理设备。
+* **环境天气仿真**：基于 WebGL Particle System 粒子系统，动态模拟雨、雪、大雾等气象环境对跑道视程的可视化影响。
+
+### 5. 基于 DeepSeek API 的智能机位指派与调度 (DeepSeek AI Dispatcher)
+* 当航班由于天气发生大面积延误时，传统人工指派停机位极易错乱。系统通过 **DeepSeek-V3 API** 综合评估航站楼内客流饱和度、当前空闲停机位、廊桥状态和航班预计到达时间，自动输出**最优的停机位与廊桥指派策略**，并生成调度日志。
 
 ---
 
-## 📂 推荐目录结构 (Repository Structure)
+## 📂 目录结构 (Repository Structure)
 
 ```text
-├── aurora-panel-web/          # 前端管理与用户面板 (React/Vite)
-├── aurora-panel-api/          # 后端计费与订阅 API 核心 (Laravel/PHP)
-├── aurora-node-daemon/        # 后端节点同步守护进程 (Go/Python)
-├── docker-compose.yml         # 主站一键部署配置
-└── README.md                  # 本说明文档
+├── src/main/java/com/aurora/twin/      # Spring Boot 后端核心业务代码
+│   ├── controller/                     # WebSocket 接口与 DeepSeek 控制器
+│   ├── service/                        # 停机位智能分配业务逻辑
+│   └── config/                         # WebSocket 终端与安全配置
+├── src/main/resources/
+│   ├── static/                         # 前端 Web 资源
+│   │   ├── js/airport_twin.js          # Three.js 核心 3D 渲染与 WebGL 逻辑
+│   │   └── index.html                  # 3D 可视化大屏主页面
+│   └── application.yml                 # 数据库、WebSocket 及 DeepSeek 密钥配置
+└── pom.xml                             # Maven 依赖配置文件
 ```
 
 ---
 
-## 💻 代码高亮：节点流量统计与授权校验守护进程
+## 💻 技术栈 (Tech Stack)
 
-以下为 Go/Python 编写的节点守护进程中，定时同步主站配置与上报用户流量的核心逻辑抽象：
-
-```python
-import time
-import requests
-
-PANEL_URL = "http://your-panel.com/api/v1/node"
-NODE_KEY = "node_secure_auth_key_12345"
-NODE_ID = 5
-
-class NodeDaemon:
-    def __init__(self):
-        self.headers = {"X-Node-Key": NODE_KEY, "Content-Type": "application/json"}
-        
-    def sync_users(self):
-        """从主站拉取最新的有效用户 UUID 列表"""
-        url = f"{PANEL_URL}/users?node_id={NODE_ID}"
-        try:
-            res = requests.get(url, headers=self.headers, timeout=5)
-            if res.status_code == 200:
-                user_list = res.json().get("users", [])
-                print(f"Successfully synced {len(user_list)} active users.")
-                return user_list
-        except Exception as e:
-            print(f"Sync users failed: {e}")
-        return []
-
-    def report_traffic(self, traffic_data):
-        """上报节点上捕获的用户流量消耗数据"""
-        # traffic_data format: { "user_uuid": bytes_consumed }
-        url = f"{PANEL_URL}/traffic"
-        payload = {
-            "node_id": NODE_ID,
-            "data": traffic_data
-        }
-        try:
-            res = requests.post(url, headers=self.headers, json=payload, timeout=5)
-            if res.status_code == 200:
-                print("Traffic data reported successfully.")
-                return True
-        except Exception as e:
-            print(f"Report traffic failed: {e}")
-        return False
-
-# daemon = NodeDaemon()
-# while True:
-#     active_users = daemon.sync_users()
-#     # ... update local xray config with active_users ...
-#     # ... collect traffic usage from xray api ...
-#     # daemon.report_traffic(collected_data)
-#     time.sleep(60)
-```
+* **三维前端**：Three.js, WebGL, GLSL Shaders, WebSocket Client, HTML5 Canvas
+* **业务后端**：Spring Boot (Java 17), Spring WebSocket, MyBatis-Plus
+* **人工智能**：DeepSeek-V3 API (基于 JSON Mode 格式化决策提取)
+* **数据存储**：MySQL 8.0, Redis (热数据与实时定位缓存)

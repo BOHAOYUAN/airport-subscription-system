@@ -1,0 +1,16 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: airport-digital-twin
+
+deepseek:
+  api:
+    key: ds-secure-api-key-xxxxxxxxxx
+    url: https://api.deepseek.com/v1/chat/completions
+
+logging:
+  level:
+    com.aurora.twin: DEBUG
+    org.springframework.web: INFO

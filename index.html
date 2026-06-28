@@ -3,275 +3,3558 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aurora-Panel 多用户中转与订阅管理系统介绍</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <title>Lumière 6.0 - Final Singularity | 奇点指挥中心</title>
+    <link href="https://fastly.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fastly.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Three.js and dependencies (使用 jsDelivr CDN 提高稳定性) -->
+    <script src="https://fastly.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/three@0.160.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/three@0.160.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/@tweenjs/tween.js@21.0.0/dist/tween.umd.js"></script>
+    
     <style>
         :root {
-            --bg-color: #0d0f12;
-            --card-bg: rgba(22, 28, 36, 0.7);
-            --border-color: rgba(255, 255, 255, 0.08);
-            --text-primary: #f3f4f6;
-            --text-secondary: #9ca3af;
-            --accent-color: #3b82f6;
-            --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-            --neon-glow: 0 0 20px rgba(59, 130, 246, 0.2);
+            --bg-primary: #020810;
+            --bg-secondary: rgba(5, 12, 25, 0.95);
+            --bg-card: rgba(8, 20, 40, 0.85);
+            --bg-modal: rgba(5, 15, 35, 0.95);
+            --accent-cyan: #00ffff;
+            --accent-blue: #0088ff;
+            --accent-purple: #8844ff;
+            --accent-green: #00ff88;
+            --accent-orange: #ff8800;
+            --accent-amber: #ffaa00;
+            --accent-red: #ff4444;
+            --accent-singularity: #ff00ff;
+            --text-primary: #e8f4ff;
+            --text-secondary: #7aa3cc;
+            --glass-border: rgba(0, 255, 255, 0.25);
+            --glass-border-strong: rgba(0, 255, 255, 0.4);
+            --glow-cyan: 0 0 30px rgba(0, 255, 255, 0.5);
+            --glow-amber: 0 0 30px rgba(255, 170, 0, 0.5);
+            --glow-singularity: 0 0 40px rgba(255, 0, 255, 0.6);
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background-color: var(--bg-color);
+            font-family: 'Segoe UI', 'Microsoft YaHei', -apple-system, sans-serif;
+            background: var(--bg-primary);
             color: var(--text-primary);
-            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            line-height: 1.6;
-            padding: 40px 20px;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ========== Header ========== */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--bg-secondary);
+            backdrop-filter: blur(25px);
+            border-bottom: 1px solid var(--glass-border);
             display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            max-width: 900px;
-            width: 100%;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 50px;
-            position: relative;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 1000;
         }
 
         .logo {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: var(--accent-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-            display: inline-block;
-        }
-
-        .subtitle {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            font-weight: 300;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 30px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            transition: transform 0.3s ease, border-color 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-            border-color: rgba(59, 130, 246, 0.3);
-            box-shadow: var(--neon-glow), 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
-
-        h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            color: #ffffff;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
+            gap: 12px;
         }
 
-        h2::before {
-            content: "";
-            display: inline-block;
-            width: 4px;
-            height: 20px;
-            background: var(--accent-gradient);
-            border-radius: 2px;
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--accent-singularity), var(--accent-cyan));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: var(--glow-singularity);
+            animation: logoPulse 3s ease-in-out infinite;
         }
 
-        p {
-            color: var(--text-secondary);
-            margin-bottom: 15px;
+        @keyframes logoPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 0, 255, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(255, 0, 255, 0.7), 0 0 60px rgba(0, 255, 255, 0.3); }
         }
 
-        ul {
-            list-style: none;
-            margin-bottom: 20px;
+        .logo-text {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, var(--accent-singularity), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
         }
 
-        li {
-            position: relative;
-            padding-left: 24px;
-            margin-bottom: 12px;
-            color: var(--text-secondary);
-        }
-
-        li::before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #10b981;
-            font-weight: bold;
-        }
-
-        .tag {
-            display: inline-block;
-            background: rgba(59, 130, 246, 0.1);
-            color: #60a5fa;
-            border: 1px solid rgba(59, 130, 246, 0.2);
+        .version-badge {
+            background: linear-gradient(135deg, var(--accent-singularity), var(--accent-cyan));
+            color: white;
             padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            margin-right: 8px;
-            margin-bottom: 8px;
-            font-weight: 500;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            animation: badgeGlow 2s ease-in-out infinite;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        @keyframes badgeGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 0, 255, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(255, 0, 255, 0.8); }
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: var(--glass-border);
+            color: var(--accent-cyan);
+        }
+
+        .search-box {
+            position: relative;
+            width: 260px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            background: rgba(0, 30, 60, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 30, 60, 0.8);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent-cyan);
+            font-size: 14px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--accent-green);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .system-time {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: var(--accent-cyan);
+            letter-spacing: 2px;
+        }
+
+        .audio-toggle, .ai-toggle {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .audio-toggle:hover, .audio-toggle.active,
+        .ai-toggle:hover, .ai-toggle.active {
+            background: rgba(0, 255, 255, 0.2);
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+        }
+
+        .ai-toggle.active {
+            background: rgba(255, 0, 255, 0.2);
+            color: var(--accent-singularity);
+            border-color: var(--accent-singularity);
+            box-shadow: var(--glow-singularity);
+        }
+
+        /* ========== Main Layout ========== */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+            margin-top: 60px;
+        }
+
+        /* ========== Left Sidebar ========== */
+        .sidebar-left {
+            width: 200px;
+            background: var(--bg-secondary);
+            backdrop-filter: blur(25px);
+            border-right: 1px solid var(--glass-border);
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sidebar-section {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-singularity), var(--accent-cyan), transparent);
+            opacity: 0.5;
+        }
+
+        .section-title {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .section-title i {
+            color: var(--accent-cyan);
+        }
+
+        /* HUD Gauge */
+        .hud-gauge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .gauge-ring {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
+        .gauge-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .gauge-bg {
+            fill: none;
+            stroke: rgba(0, 255, 255, 0.1);
+            stroke-width: 6;
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke: var(--accent-cyan);
+            stroke-width: 6;
+            stroke-linecap: round;
+            stroke-dasharray: 201.06;
+            stroke-dashoffset: 201.06;
+            transition: stroke-dashoffset 1.5s ease-out, stroke 0.5s;
+            filter: drop-shadow(0 0 8px var(--accent-cyan));
+        }
+
+        .gauge-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 10px var(--accent-cyan);
+        }
+
+        .gauge-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+
+        .gauge-change {
+            font-size: 10px;
+            margin-top: 2px;
+        }
+
+        .gauge-change.positive { color: var(--accent-green); }
+        .gauge-change.negative { color: var(--accent-red); }
+        .gauge-change.warning { color: var(--accent-amber); }
+
+        /* ========== Center Content ========== */
+        .center-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            background: linear-gradient(180deg, #020810 0%, #0a1628 100%);
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #three-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Prediction Mode Badge */
+        .prediction-badge {
+            position: absolute;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 170, 0, 0.2);
+            border: 1px solid var(--accent-amber);
+            color: var(--accent-amber);
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+            animation: predictionPulse 2s infinite;
+        }
+
+        .prediction-badge.active {
+            display: flex;
+        }
+
+        @keyframes predictionPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 170, 0, 0.3); }
+            50% { box-shadow: 0 0 25px rgba(255, 170, 0, 0.6); }
+        }
+
+        /* AI Status Badge */
+        .ai-status-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(255, 0, 255, 0.15);
+            border: 1px solid var(--accent-singularity);
+            color: var(--accent-singularity);
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 12px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .ai-status-badge.active {
+            display: flex;
+            animation: aiPulse 1.5s infinite;
+        }
+
+        @keyframes aiPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 0, 255, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(255, 0, 255, 0.7); }
+        }
+
+        .ai-thinking-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-singularity);
+            border-radius: 50%;
+            animation: aiDot 1s infinite;
+        }
+
+        @keyframes aiDot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Bottom Panel */
+        .bottom-panel {
+            height: 120px;
+            background: var(--bg-secondary);
+            backdrop-filter: blur(25px);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            padding: 12px 20px;
             gap: 20px;
         }
 
-        .grid-item {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border-color);
+        /* Voice Panel */
+        .voice-panel {
+            width: 200px;
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
             border-radius: 12px;
-            padding: 20px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
         }
 
-        .grid-item h3 {
-            font-size: 1.1rem;
-            margin-bottom: 10px;
-            color: #ffffff;
+        .voice-panel.active {
+            border-color: var(--accent-singularity);
+            box-shadow: var(--glow-singularity);
         }
 
-        pre {
-            background: #050709;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
-            overflow-x: auto;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
-            margin-top: 15px;
+        .voice-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--accent-cyan);
+            margin-bottom: 8px;
+            transition: all 0.3s;
         }
 
-        code {
-            color: #e5e7eb;
+        .voice-panel.active .voice-icon {
+            background: rgba(255, 0, 255, 0.2);
+            border-color: var(--accent-singularity);
+            color: var(--accent-singularity);
+            animation: voicePulse 1s infinite;
         }
 
-        .keyword { color: #f472b6; }
-        .function { color: #60a5fa; }
-        .string { color: #34d399; }
-        .comment { color: #6b7280; }
+        @keyframes voicePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
 
-        .footer {
-            text-align: center;
+        .voice-waves {
+            display: flex;
+            gap: 3px;
+            height: 20px;
+            align-items: center;
+        }
+
+        .voice-wave {
+            width: 3px;
+            height: 8px;
+            background: var(--accent-cyan);
+            border-radius: 2px;
+            transition: height 0.1s;
+        }
+
+        .voice-panel.active .voice-wave {
+            animation: wave 0.5s infinite;
+            background: var(--accent-singularity);
+        }
+
+        .voice-wave:nth-child(1) { animation-delay: 0s; }
+        .voice-wave:nth-child(2) { animation-delay: 0.1s; }
+        .voice-wave:nth-child(3) { animation-delay: 0.2s; }
+        .voice-wave:nth-child(4) { animation-delay: 0.3s; }
+        .voice-wave:nth-child(5) { animation-delay: 0.4s; }
+        .voice-wave:nth-child(6) { animation-delay: 0.5s; }
+        .voice-wave:nth-child(7) { animation-delay: 0.6s; }
+
+        @keyframes wave {
+            0%, 100% { height: 8px; }
+            50% { height: 20px; }
+        }
+
+        .voice-hint {
+            font-size: 11px;
             color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-top: 50px;
-            border-top: 1px solid var(--border-color);
-            padding-top: 20px;
+            margin-top: 6px;
         }
 
-        .footer a {
-            color: #60a5fa;
-            text-decoration: none;
+        /* Timeline Panel */
+        .timeline-panel {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 12px 20px;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .timeline-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .timeline-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .congestion-indicator {
+            text-align: right;
+        }
+
+        .congestion-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .congestion-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .timeline-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            margin-top: 8px;
+        }
+
+        .timeline-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, var(--accent-singularity), var(--accent-cyan));
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+        }
+
+        .timeline-marks {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        /* ========== Right Sidebar ========== */
+        .sidebar-right {
+            width: 280px;
+            background: var(--bg-secondary);
+            backdrop-filter: blur(25px);
+            border-left: 1px solid var(--glass-border);
+            padding: 16px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            scroll-behavior: smooth;
+        }
+
+        /* 航班列表容器 - 确保可滚动 */
+        #flightList {
+            max-height: 350px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 4px;
+            scroll-behavior: smooth;
+        }
+
+        /* Flight List */
+        .flight-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .flight-list-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .flight-list-title i {
+            color: var(--accent-cyan);
+        }
+
+        .flight-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .flight-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateX(-4px);
+            box-shadow: 4px 0 20px rgba(0, 255, 255, 0.2);
+        }
+
+        .flight-card.highlighted {
+            border-color: var(--accent-singularity);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+        }
+
+        .flight-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .flight-no {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .flight-status {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .flight-status.scheduled { background: rgba(0, 136, 255, 0.2); color: var(--accent-blue); }
+        .flight-status.boarding { background: rgba(0, 255, 136, 0.2); color: var(--accent-green); }
+        .flight-status.departed { background: rgba(136, 68, 255, 0.2); color: var(--accent-purple); }
+        .flight-status.landing { background: rgba(255, 170, 0, 0.2); color: var(--accent-amber); }
+        .flight-status.arrived { background: rgba(0, 255, 255, 0.2); color: var(--accent-cyan); }
+        .flight-status.delayed { background: rgba(255, 68, 68, 0.2); color: var(--accent-red); }
+        .flight-status.cancelled { background: rgba(100, 100, 100, 0.2); color: #888; }
+
+        .flight-route {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .flight-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .flight-gate {
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        /* Gate Grid */
+        .gate-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .gate-item {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .gate-item:hover {
+            border-color: var(--accent-cyan);
+            transform: scale(1.05);
+        }
+
+        .gate-item.highlighted {
+            border-color: var(--accent-singularity);
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
+        }
+
+        .gate-item.available { border-left: 3px solid var(--accent-green); }
+        .gate-item.busy { border-left: 3px solid var(--accent-amber); }
+        .gate-item.closed { border-left: 3px solid var(--accent-red); }
+
+        .gate-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .gate-status {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* System Log */
+        .system-log {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            font-size: 11px;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            gap: 8px;
+        }
+
+        .log-time {
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .log-message {
+            color: var(--text-primary);
+        }
+
+        .log-entry.success .log-message { color: var(--accent-green); }
+        .log-entry.warning .log-message { color: var(--accent-amber); }
+        .log-entry.error .log-message { color: var(--accent-red); }
+        .log-entry.prediction .log-message { color: var(--accent-purple); }
+        .log-entry.ai .log-message { color: var(--accent-singularity); }
+
+        /* ========== Modal Styles - 赛博深空磨砂玻璃风格 ========== */
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(5, 15, 35, 0.95), rgba(10, 25, 50, 0.95));
+            border: 1px solid var(--glass-border-strong);
+            border-radius: 20px;
+            backdrop-filter: blur(30px);
+            box-shadow: 
+                0 0 40px rgba(0, 255, 255, 0.15),
+                0 0 80px rgba(255, 0, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--glass-border);
+            padding: 20px 24px;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.05), transparent);
+        }
+
+        .modal-title {
+            color: var(--text-primary);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-title i {
+            color: var(--accent-cyan);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--glass-border);
+            padding: 16px 24px;
+            background: linear-gradient(90deg, transparent, rgba(255, 0, 255, 0.03), transparent);
+        }
+
+        .btn-close {
+            filter: invert(1);
+            opacity: 0.5;
+        }
+
+        .btn-close:hover {
+            opacity: 1;
+        }
+
+        /* Form Controls in Modal */
+        .form-label {
+            color: var(--text-secondary);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .form-control, .form-select {
+            background: rgba(0, 20, 40, 0.6);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 12px 16px;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(0, 30, 60, 0.8);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            color: var(--text-primary);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .form-select option {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        /* Buttons */
+        .btn-cyber {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 136, 255, 0.2));
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 10px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-cyber:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.3), rgba(0, 136, 255, 0.3));
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+            color: #fff;
+        }
+
+        .btn-singularity {
+            background: linear-gradient(135deg, rgba(255, 0, 255, 0.2), rgba(136, 68, 255, 0.2));
+            border: 1px solid var(--accent-singularity);
+            color: var(--accent-singularity);
+            padding: 10px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-singularity:hover {
+            background: linear-gradient(135deg, rgba(255, 0, 255, 0.3), rgba(136, 68, 255, 0.3));
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.4);
+            color: #fff;
+        }
+
+        .btn-danger-cyber {
+            background: linear-gradient(135deg, rgba(255, 68, 68, 0.2), rgba(255, 100, 100, 0.2));
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+            padding: 10px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-danger-cyber:hover {
+            background: linear-gradient(135deg, rgba(255, 68, 68, 0.3), rgba(255, 100, 100, 0.3));
+            box-shadow: 0 0 25px rgba(255, 68, 68, 0.4);
+            color: #fff;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-cyan);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-singularity);
+        }
+
+        /* AI Response Panel */
+        .ai-response-panel {
+            position: fixed;
+            bottom: 140px;
+            left: 220px;
+            right: 300px;
+            background: linear-gradient(135deg, rgba(255, 0, 255, 0.1), rgba(0, 255, 255, 0.1));
+            border: 1px solid var(--accent-singularity);
+            border-radius: 16px;
+            padding: 16px 20px;
+            backdrop-filter: blur(20px);
+            display: none;
+            z-index: 100;
+            box-shadow: 0 0 40px rgba(255, 0, 255, 0.3);
+        }
+
+        .ai-response-panel.active {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ai-response-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .ai-response-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--accent-singularity);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+        }
+
+        .ai-response-title {
+            font-size: 12px;
+            color: var(--accent-singularity);
+            font-weight: 600;
+        }
+
+        .ai-response-content {
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .ai-response-action {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 0, 255, 0.2);
+            font-size: 12px;
+            color: var(--accent-cyan);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">Aurora-Panel</div>
-            <div class="subtitle">多用户中转与订阅管理系统 (Airport Management System)</div>
-        </header>
-
-        <div class="card">
-            <h2>系统定位 & 商业价值</h2>
-            <p>Aurora-Panel 是一款专为高速网络中转服务商设计的高性能、高容错订阅管理与计费面板。解决的核心痛点是：<b>高并发下的流控阻断、自动化的多客户端配置订阅生成、以及全自动的支付开通流程。</b></p>
-            <div style="margin-top: 15px;">
-                <span class="tag">分布式架构</span>
-                <span class="tag">多协议支持</span>
-                <span class="tag">一键部署</span>
-                <span class="tag">防封安全</span>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">
+                <i class="bi bi-broadcast"></i>
             </div>
+            <span class="logo-text">LUMIÈRE COMMAND CENTER</span>
+            <span class="version-badge">v6.0 Singularity</span>
         </div>
-
-        <div class="card">
-            <h2>核心技术架构</h2>
-            <div class="grid">
-                <div class="grid-item">
-                    <h3>前端用户/管理面板</h3>
-                    <p>基于 React/Vite 框架与 Tailwind CSS 构建，提供响应式移动端适配，包含完整的账单流、节点状态监控与工单系统。</p>
-                </div>
-                <div class="grid-item">
-                    <h3>后端计费 API 核心</h3>
-                    <p>采用 PHP Laravel 框架开发，处理套餐周期计费、三方支付回调接口，支持高频缓存（Redis）承载订阅请求。</p>
-                </div>
-                <div class="grid-item">
-                    <h3>节点同步守护进程 (Daemon)</h3>
-                    <p>采用 Go/Python 编写，定时从 API 拉取活跃用户 UUID 同步到代理内核（Xray / Hysteria 2 / TUIC），实现秒级流量结算。</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>系统亮点功能</h2>
-            <ul>
-                <li><b>主流代理协议全覆盖</b>：原生支持 VLESS Reality, VMess gRPC, Trojan 以及目前吞吐性能极佳的 Hysteria 2。</li>
-                <li><b>内置订阅转换 (Subconverter)</b>：无需依赖外部接口，主站自动生成适配 Clash, Shadowrocket, Surge 等客户端配置。</li>
-                <li><b>微信/支付宝/数字货币聚合支付</b>：支持三方易支付自动回调开通套餐，实现完全无人值守自动运维。</li>
-                <li><b>精细化流控限速</b>：可对单个节点、单个用户设置独立的限速、限流以及最大在线 IP 客户端限制。</li>
-            </ul>
-        </div>
-
-        <div class="card">
-            <h2>节点同步核心代码示例 (Go/Python Daemon)</h2>
-            <p>后端节点通过安全的 Handshake 密钥通信，定期拉取活跃用户配置并上报流量数据：</p>
-            <pre><code><span class="comment"># 节点流量统计与授权校验守护进程示例</span>
-<span class="keyword">import</span> time
-<span class="keyword">import</span> requests
-
-PANEL_URL = <span class="string">"http://your-panel.com/api/v1/node"</span>
-NODE_KEY = <span class="string">"node_secure_auth_key_12345"</span>
-NODE_ID = 5
-
-<span class="keyword">class</span> <span class="function">NodeDaemon</span>:
-    <span class="keyword">def</span> <span class="function">__init__</span>(self):
-        self.headers = {<span class="string">"X-Node-Key"</span>: NODE_KEY, <span class="string">"Content-Type"</span>: <span class="string">"application/json"</span>}
         
-    <span class="keyword">def</span> <span class="function">sync_users</span>(self):
-        <span class="keyword">try</span>:
-            res = requests.get(f<span class="string">"{PANEL_URL}/users?node_id={NODE_ID}"</span>, headers=self.headers, timeout=5)
-            <span class="keyword">if</span> res.status_code == 200:
-                <span class="keyword">return</span> res.json().get(<span class="string">"users"</span>, [])
-        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
-            print(f<span class="string">"Sync failed: {e}"</span>)
-        <span class="keyword">return</span> []
-
-    <span class="keyword">def</span> <span class="function">report_traffic</span>(self, traffic_data):
-        <span class="keyword">try</span>:
-            res = requests.post(f<span class="string">"{PANEL_URL}/traffic"</span>, headers=self.headers, json={<span class="string">"node_id"</span>: NODE_ID, <span class="string">"data"</span>: traffic_data}, timeout=5)
-            <span class="keyword">return</span> res.status_code == 200
-        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
-            print(f<span class="string">"Report failed: {e}"</span>)
-        <span class="keyword">return</span> <span class="keyword">False</span></code></pre>
+        <nav class="header-nav">
+            <button class="nav-btn active" onclick="showDashboard()">
+                <i class="bi bi-grid-3x3-gap"></i> 仪表盘
+            </button>
+            <button class="nav-btn" onclick="showFlightManagement()">
+                <i class="bi bi-airplane"></i> 航班管理
+            </button>
+            <button class="nav-btn" onclick="showGateManagement()">
+                <i class="bi bi-door-open"></i> 登机口
+            </button>
+            <button class="nav-btn" onclick="showAirlineManagement()">
+                <i class="bi bi-building"></i> 航空公司
+            </button>
+            <button class="nav-btn" onclick="showParkingManagement()">
+                <i class="bi bi-p-circle"></i> 停车场
+            </button>
+        </nav>
+        
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" placeholder="搜索航班、登机口..." id="globalSearch" oninput="handleGlobalSearch(this.value)">
         </div>
+        
+        <div class="header-right">
+            <div class="live-indicator">
+                <div class="live-dot"></div>
+                <span>LIVE</span>
+            </div>
+            <div class="system-time" id="systemTime">00:00:00</div>
+            <button class="audio-toggle" id="audioToggle" onclick="toggleAudio()">
+                <i class="bi bi-volume-up"></i>
+            </button>
+            <button class="ai-toggle" id="aiToggle" onclick="toggleAI()" title="DeepSeek AI">
+                <i class="bi bi-robot"></i>
+            </button>
+            <button class="nav-btn" id="voiceToggle" onclick="toggleVoice()">
+                <i class="bi bi-mic"></i> 语音
+            </button>
+        </div>
+    </header>
 
-        <div class="footer">
-            项目文档托管于 GitHub: <a href="https://github.com/BOHAOYUAN/airport-subscription-system" target="_blank">BOHAOYUAN / airport-subscription-system</a>
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Sidebar -->
+        <aside class="sidebar-left">
+            <div class="sidebar-section">
+                <div class="section-title">
+                    <i class="bi bi-activity"></i> 系统状态
+                </div>
+                
+                <div class="hud-gauge">
+                    <div class="gauge-ring">
+                        <svg width="80" height="80">
+                            <circle class="gauge-bg" cx="40" cy="40" r="32"></circle>
+                            <circle class="gauge-fill" id="flightGauge" cx="40" cy="40" r="32"></circle>
+                        </svg>
+                        <div class="gauge-value" id="flightCount">0</div>
+                    </div>
+                    <div class="gauge-label">今日航班</div>
+                    <div class="gauge-change positive" id="flightChange">↑ +12%</div>
+                </div>
+                
+                <div class="hud-gauge">
+                    <div class="gauge-ring">
+                        <svg width="80" height="80">
+                            <circle class="gauge-bg" cx="40" cy="40" r="32"></circle>
+                            <circle class="gauge-fill" id="onTimeGauge" cx="40" cy="40" r="32" style="stroke: var(--accent-green);"></circle>
+                        </svg>
+                        <div class="gauge-value" id="onTimeRate" style="color: var(--accent-green);">0%</div>
+                    </div>
+                    <div class="gauge-label">准点率</div>
+                    <div class="gauge-change positive" id="onTimeChange">↑ 较昨日提升</div>
+                </div>
+                
+                <div class="hud-gauge">
+                    <div class="gauge-ring">
+                        <svg width="80" height="80">
+                            <circle class="gauge-bg" cx="40" cy="40" r="32"></circle>
+                            <circle class="gauge-fill" id="delayGauge" cx="40" cy="40" r="32" style="stroke: var(--accent-red);"></circle>
+                        </svg>
+                        <div class="gauge-value" id="delayCount" style="color: var(--accent-red);">0</div>
+                    </div>
+                    <div class="gauge-label">延误航班</div>
+                    <div class="gauge-change warning" id="delayChange">⚠ 需要关注</div>
+                </div>
+                
+                <div class="hud-gauge">
+                    <div class="gauge-ring">
+                        <svg width="80" height="80">
+                            <circle class="gauge-bg" cx="40" cy="40" r="32"></circle>
+                            <circle class="gauge-fill" id="passengerGauge" cx="40" cy="40" r="32" style="stroke: var(--accent-amber);"></circle>
+                        </svg>
+                        <div class="gauge-value" id="passengerCount" style="color: var(--accent-amber); font-size: 16px;">0</div>
+                    </div>
+                    <div class="gauge-label">旅客吞吐</div>
+                    <div class="gauge-change positive">人次/今日</div>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="section-title">
+                    <i class="bi bi-car-front"></i> 停车场实时
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 24px; font-weight: 700; color: var(--accent-green);" id="availableSpaces">0</div>
+                        <div style="font-size: 10px; color: var(--text-secondary);">可用车位</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 24px; font-weight: 700; color: var(--accent-amber);" id="occupiedSpaces">0</div>
+                        <div style="font-size: 10px; color: var(--text-secondary);">已占用</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Content -->
+        <main class="center-content">
+            <div class="canvas-container">
+                <canvas id="three-canvas"></canvas>
+                <div class="prediction-badge" id="predictionBadge">
+                    <i class="bi bi-clock-history"></i>
+                    <span>预测模式: <span id="predictionTime">+4小时</span></span>
+                </div>
+                <div class="ai-status-badge" id="aiStatusBadge">
+                    <div class="ai-thinking-dot"></div>
+                    <span id="aiStatusText">DeepSeek 思考中...</span>
+                </div>
+            </div>
+            
+            <div class="bottom-panel">
+                <div class="voice-panel" id="voicePanel">
+                    <div class="voice-icon" id="voiceIcon">
+                        <i class="bi bi-mic"></i>
+                    </div>
+                    <div class="voice-waves">
+                        <div class="voice-wave"></div>
+                        <div class="voice-wave"></div>
+                        <div class="voice-wave"></div>
+                        <div class="voice-wave"></div>
+                        <div class="voice-wave"></div>
+                        <div class="voice-wave"></div>
+                        <div class="voice-wave"></div>
+                    </div>
+                    <div class="voice-hint">说 "Lumière" 或 "先知" 唤醒</div>
+                </div>
+                
+                <div class="timeline-panel">
+                    <div class="timeline-header">
+                        <div>
+                            <div class="timeline-title">时间轴</div>
+                            <div class="timeline-value" id="timelineValue">+4小时</div>
+                        </div>
+                        <div class="congestion-indicator">
+                            <div class="congestion-label">拥堵指数</div>
+                            <div class="congestion-value" id="congestionValue">90%</div>
+                        </div>
+                    </div>
+                    <input type="range" class="timeline-slider" id="timelineSlider" min="-2" max="4" value="0" step="1" oninput="handleTimelineChange(this.value)">
+                    <div class="timeline-marks">
+                        <span>-2h</span>
+                        <span>-1h</span>
+                        <span>现在</span>
+                        <span>+1h</span>
+                        <span>+2h</span>
+                        <span>+3h</span>
+                        <span>+4h</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar -->
+        <aside class="sidebar-right">
+            <div class="sidebar-section">
+                <div class="flight-list-header">
+                    <div class="flight-list-title">
+                        <i class="bi bi-broadcast-pin"></i> 实时航班动态
+                    </div>
+                    <div class="live-indicator" style="font-size: 10px;">
+                        <div class="live-dot" style="width: 6px; height: 6px;"></div>
+                        LIVE
+                    </div>
+                </div>
+                <div id="flightList"></div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="section-title">
+                    <i class="bi bi-door-open"></i> 登机口状态
+                </div>
+                <div class="gate-grid" id="gateGrid"></div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="section-title">
+                    <i class="bi bi-journal-text"></i> 系统日志
+                </div>
+                <div class="system-log" id="systemLog"></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- AI Response Panel -->
+    <div class="ai-response-panel" id="aiResponsePanel">
+        <div class="ai-response-header">
+            <div class="ai-response-icon">
+                <i class="bi bi-robot"></i>
+            </div>
+            <div class="ai-response-title">DeepSeek AI 响应</div>
+        </div>
+        <div class="ai-response-content" id="aiResponseContent">
+            正在分析您的指令...
+        </div>
+        <div class="ai-response-action" id="aiResponseAction">
+            执行中...
         </div>
     </div>
+
+    <!-- Flight Modal -->
+    <div class="modal fade" id="flightModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-airplane"></i>
+                        <span id="flightModalTitle">航班管理</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="flightForm">
+                        <input type="hidden" id="flightId">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">航班号</label>
+                                <input type="text" class="form-control" id="flightNo" placeholder="例: CA1234" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">航空公司</label>
+                                <select class="form-select" id="airlineId" required>
+                                    <option value="">选择航空公司</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">出发城市</label>
+                                <input type="text" class="form-control" id="departureCity" placeholder="例: 北京" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">到达城市</label>
+                                <input type="text" class="form-control" id="arrivalCity" placeholder="例: 上海" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">计划时间</label>
+                                <input type="datetime-local" class="form-control" id="scheduledTime" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">登机口</label>
+                                <select class="form-select" id="gateId">
+                                    <option value="">选择登机口</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">状态</label>
+                                <select class="form-select" id="flightStatus">
+                                    <option value="scheduled">计划中</option>
+                                    <option value="boarding">登机中</option>
+                                    <option value="departed">已起飞</option>
+                                    <option value="landing">降落中</option>
+                                    <option value="arrived">已到达</option>
+                                    <option value="delayed">延误</option>
+                                    <option value="cancelled">取消</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">预计旅客数</label>
+                                <input type="number" class="form-control" id="passengerCountInput" placeholder="例: 180">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-danger-cyber" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn-singularity" onclick="saveFlight()">
+                        <i class="bi bi-check-lg"></i> 保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gate Modal -->
+    <div class="modal fade" id="gateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-door-open"></i>
+                        <span id="gateModalTitle">登机口管理</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="gateForm">
+                        <input type="hidden" id="gateIdInput">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">登机口名称</label>
+                                <input type="text" class="form-control" id="gateName" placeholder="例: A01" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">航站楼</label>
+                                <select class="form-select" id="gateTerminal" required>
+                                    <option value="T1">T1</option>
+                                    <option value="T2">T2</option>
+                                    <option value="T3">T3</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label">状态</label>
+                                <select class="form-select" id="gateStatus">
+                                    <option value="available">可用</option>
+                                    <option value="busy">使用中</option>
+                                    <option value="maintenance">维护中</option>
+                                    <option value="closed">关闭</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-danger-cyber" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn-singularity" onclick="saveGate()">
+                        <i class="bi bi-check-lg"></i> 保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Airline Modal -->
+    <div class="modal fade" id="airlineModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-building"></i>
+                        <span id="airlineModalTitle">航空公司管理</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="airlineForm">
+                        <input type="hidden" id="airlineIdInput">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">航空公司代码</label>
+                                <input type="text" class="form-control" id="airlineCode" placeholder="例: CA" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">航空公司名称</label>
+                                <input type="text" class="form-control" id="airlineName" placeholder="例: 中国国际航空" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">英文名称</label>
+                                <input type="text" class="form-control" id="airlineNameEn" placeholder="例: Air China">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">联系电话</label>
+                                <input type="text" class="form-control" id="airlinePhone" placeholder="例: 95583">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-danger-cyber" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn-singularity" onclick="saveAirline()">
+                        <i class="bi bi-check-lg"></i> 保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parking Modal -->
+    <div class="modal fade" id="parkingModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-p-circle"></i>
+                        <span id="parkingModalTitle">停车场管理</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="parkingForm">
+                        <input type="hidden" id="parkingIdInput">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">停车场名称</label>
+                                <input type="text" class="form-control" id="parkingName" placeholder="例: P1 航站楼停车场" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">区域代码</label>
+                                <input type="text" class="form-control" id="parkingZone" placeholder="例: P1" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">总车位数</label>
+                                <input type="number" class="form-control" id="totalSpaces" placeholder="例: 500" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">每小时费率</label>
+                                <input type="number" class="form-control" id="hourlyRate" placeholder="例: 15" step="0.01">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-danger-cyber" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn-singularity" onclick="saveParking()">
+                        <i class="bi bi-check-lg"></i> 保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // ==================== Global State ====================
+        const state = {
+            flights: [],
+            gates: [],
+            airlines: [],
+            parkingLots: [],
+            currentFilter: 'all',
+            searchQuery: '',
+            highlightedItems: [],
+            predictionMode: false,
+            predictionHours: 0,
+            isVoiceActive: false,
+            audioEnabled: false,
+            aiEnabled: true,
+            aiThinking: false,
+            recognition: null,
+            audioContext: null,
+            websocket: null,
+            directorBridge: null,
+            cameraTargets: {}
+        };
+
+        // ==================== Configuration ====================
+        const CONFIG = {
+            API_BASE: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+                ? 'http://localhost:8080/api' 
+                : '/api',
+            WS_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'ws://localhost:8080/ws/flight'
+                : `ws://${window.location.host}/ws/flight`,
+            DIRECTOR_WS_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'ws://localhost:8080/ws/director'
+                : `ws://${window.location.host}/ws/director`,
+            DEEPSEEK_API_KEY: 'YOUR_DEEPSEEK_API_KEY_HERE',
+            DEEPSEEK_MODEL: 'deepseek-chat',
+            DEEPSEEK_BASE_URL: 'https://api.deepseek.com/v1'
+        };
+
+        // ==================== DeepSeek AI Integration ====================
+        const DeepSeekAI = {
+            // Function definitions for AI to call
+            functions: [
+                {
+                    name: 'filterFlights',
+                    description: '筛选航班列表，可以按状态筛选航班',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            status: {
+                                type: 'string',
+                                enum: ['all', 'scheduled', 'boarding', 'departed', 'landing', 'arrived', 'delayed', 'cancelled'],
+                                description: '航班状态: all-全部, scheduled-计划中, boarding-登机中, departed-已起飞, landing-降落中, arrived-已到达, delayed-延误, cancelled-取消'
+                            }
+                        },
+                        required: ['status']
+                    }
+                },
+                {
+                    name: 'focusOnGate',
+                    description: '聚焦到指定的登机口，在3D场景中定位并高亮显示',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            gateName: {
+                                type: 'string',
+                                description: '登机口名称，如 A01, A02, B01, B02 等'
+                            }
+                        },
+                        required: ['gateName']
+                    }
+                },
+                {
+                    name: 'setPredictionMode',
+                    description: '开启或关闭预测模式，预测未来几小时的航班状态',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            enabled: {
+                                type: 'boolean',
+                                description: '是否开启预测模式'
+                            },
+                            hours: {
+                                type: 'number',
+                                description: '预测的小时数，范围 -2 到 4'
+                            }
+                        },
+                        required: ['enabled']
+                    }
+                },
+                {
+                    name: 'searchFlights',
+                    description: '搜索航班，可以按航班号、城市、航空公司等关键词搜索',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            keyword: {
+                                type: 'string',
+                                description: '搜索关键词'
+                            }
+                        },
+                        required: ['keyword']
+                    }
+                },
+                {
+                    name: 'resetView',
+                    description: '重置视图，恢复到默认状态',
+                    parameters: {
+                        type: 'object',
+                        properties: {}
+                    }
+                },
+                {
+                    name: 'getFlightInfo',
+                    description: '获取指定航班的详细信息',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            flightNo: {
+                                type: 'string',
+                                description: '航班号，如 CA1234, MU5678'
+                            }
+                        },
+                        required: ['flightNo']
+                    }
+                }
+            ],
+
+            // Call Backend AI API (DeepSeek Agent)
+            async processCommand(userInput) {
+                if (!state.aiEnabled) {
+                    addLog('AI 功能已关闭', 'warning');
+                    return null;
+                }
+
+                state.aiThinking = true;
+                showAIStatus('正在分析指令...');
+
+                try {
+                    // 调用后端 AI API
+                    const response = await fetch(`${CONFIG.API_BASE}/ai/command`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            prompt: userInput,
+                            context: {}
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API 请求失败: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    // 后端返回的是 Result<AIResponse>
+                    if (result.code === 200 && result.data) {
+                        const aiResponse = result.data;
+                        
+                        addLog(`AI: ${aiResponse.text}`, aiResponse.success ? 'ai' : 'warning');
+                        
+                        // 显示 AI 响应
+                        showAIResponse('AI 执行结果', aiResponse.text);
+                        
+                        // 语音播报
+                        if (state.audioEnabled) {
+                            speakText(aiResponse.text);
+                        }
+                        
+                        // 刷新数据（后端已经通过 WebSocket 推送，这里主动刷新以确保同步）
+                        setTimeout(() => {
+                            loadFlights();
+                            updateGauges();
+                        }, 500);
+                        
+                        return { success: aiResponse.success, message: aiResponse.text };
+                    } else {
+                        throw new Error(result.message || 'AI 处理失败');
+                    }
+
+                } catch (error) {
+                    console.error('DeepSeek API Error:', error);
+                    addLog(`AI 处理失败: ${error.message}`, 'error');
+                    hideAIStatus();
+                    
+                    // Fallback to keyword matching
+                    return this.fallbackKeywordMatch(userInput);
+                } finally {
+                    state.aiThinking = false;
+                    setTimeout(hideAIStatus, 3000);
+                }
+            },
+
+            // Execute the function called by AI
+            async executeFunction(functionName, args) {
+                switch (functionName) {
+                    case 'filterFlights':
+                        filterFlights(args.status);
+                        return { 
+                            success: true, 
+                            message: `已筛选 ${getStatusText(args.status)} 的航班` 
+                        };
+
+                    case 'focusOnGate':
+                        focusOnGate(args.gateName);
+                        return { 
+                            success: true, 
+                            message: `已聚焦到登机口 ${args.gateName}` 
+                        };
+
+                    case 'setPredictionMode':
+                        if (args.enabled) {
+                            const hours = args.hours || 2;
+                            document.getElementById('timelineSlider').value = hours;
+                            handleTimelineChange(hours);
+                            return { 
+                                success: true, 
+                                message: `已开启预测模式，预测 ${hours > 0 ? '+' : ''}${hours} 小时` 
+                            };
+                        } else {
+                            document.getElementById('timelineSlider').value = 0;
+                            handleTimelineChange(0);
+                            return { 
+                                success: true, 
+                                message: '已关闭预测模式' 
+                            };
+                        }
+
+                    case 'searchFlights':
+                        handleGlobalSearch(args.keyword);
+                        document.getElementById('globalSearch').value = args.keyword;
+                        return { 
+                            success: true, 
+                            message: `已搜索: ${args.keyword}` 
+                        };
+
+                    case 'resetView':
+                        filterFlights('all');
+                        resetCamera();
+                        document.getElementById('globalSearch').value = '';
+                        handleGlobalSearch('');
+                        document.getElementById('timelineSlider').value = 0;
+                        handleTimelineChange(0);
+                        return { 
+                            success: true, 
+                            message: '已重置视图' 
+                        };
+
+                    case 'getFlightInfo':
+                        const flight = state.flights.find(f => 
+                            f.flightNo.toLowerCase() === args.flightNo.toLowerCase()
+                        );
+                        if (flight) {
+                            return { 
+                                success: true, 
+                                message: `航班 ${flight.flightNo}: ${flight.departureCity} → ${flight.arrivalCity}, 状态: ${getStatusText(flight.status)}, 登机口: ${flight.gateName || '未分配'}` 
+                            };
+                        } else {
+                            return { 
+                                success: false, 
+                                message: `未找到航班 ${args.flightNo}` 
+                            };
+                        }
+
+                    default:
+                        return { 
+                            success: false, 
+                            message: '未知操作' 
+                        };
+                }
+            },
+
+            // Get human-readable function description
+            getFunctionDescription(functionName) {
+                const descriptions = {
+                    'filterFlights': '筛选航班',
+                    'focusOnGate': '聚焦登机口',
+                    'setPredictionMode': '设置预测模式',
+                    'searchFlights': '搜索航班',
+                    'resetView': '重置视图',
+                    'getFlightInfo': '获取航班信息'
+                };
+                return descriptions[functionName] || functionName;
+            },
+
+            // Fallback keyword matching when API fails
+            fallbackKeywordMatch(transcript) {
+                addLog('使用本地关键词匹配', 'warning');
+                
+                const lower = transcript.toLowerCase();
+                
+                if (lower.includes('延误') || lower.includes('delay')) {
+                    filterFlights('delayed');
+                    return { success: true, message: '已筛选延误航班' };
+                }
+                if (lower.includes('降落') || lower.includes('landing')) {
+                    filterFlights('landing');
+                    return { success: true, message: '已筛选降落航班' };
+                }
+                if (lower.includes('登机') || lower.includes('boarding')) {
+                    filterFlights('boarding');
+                    return { success: true, message: '已筛选登机航班' };
+                }
+                if (lower.includes('重置') || lower.includes('全部') || lower.includes('reset')) {
+                    filterFlights('all');
+                    resetCamera();
+                    return { success: true, message: '已重置视图' };
+                }
+                if (lower.includes('预测') || lower.includes('predict')) {
+                    const hourMatch = transcript.match(/(\d+)\s*小时/);
+                    if (hourMatch) {
+                        const hours = parseInt(hourMatch[1]);
+                        document.getElementById('timelineSlider').value = hours;
+                        handleTimelineChange(hours);
+                        return { success: true, message: `已开启预测模式: +${hours}小时` };
+                    }
+                }
+                
+                // Check for gate focus
+                const gateMatch = transcript.match(/([AB]\d{2})/i);
+                if (gateMatch) {
+                    focusOnGate(gateMatch[1].toUpperCase());
+                    return { success: true, message: `已聚焦到登机口 ${gateMatch[1].toUpperCase()}` };
+                }
+
+                return { success: false, message: '无法识别指令' };
+            }
+        };
+
+        // ==================== AI UI Functions ====================
+        function showAIStatus(text) {
+            const badge = document.getElementById('aiStatusBadge');
+            const statusText = document.getElementById('aiStatusText');
+            statusText.textContent = text;
+            badge.classList.add('active');
+        }
+
+        function hideAIStatus() {
+            document.getElementById('aiStatusBadge').classList.remove('active');
+        }
+
+        function showAIResponse(title, content, action = '') {
+            const panel = document.getElementById('aiResponsePanel');
+            document.getElementById('aiResponseContent').textContent = content;
+            document.getElementById('aiResponseAction').textContent = action || `执行时间: ${new Date().toLocaleTimeString()}`;
+            panel.classList.add('active');
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                panel.classList.remove('active');
+            }, 5000);
+        }
+
+        function toggleAI() {
+            state.aiEnabled = !state.aiEnabled;
+            const btn = document.getElementById('aiToggle');
+            btn.classList.toggle('active', state.aiEnabled);
+            addLog(state.aiEnabled ? 'DeepSeek AI 已启用' : 'DeepSeek AI 已禁用', state.aiEnabled ? 'ai' : 'info');
+        }
+
+        // ==================== API Functions ====================
+        async function fetchAPI(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${CONFIG.API_BASE}${endpoint}`, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                const data = await response.json();
+                if (data.code === 200) {
+                    return data.data;
+                } else {
+                    throw new Error(data.message || '请求失败');
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                // Return mock data if API fails
+                return null;
+            }
+        }
+
+        // ==================== WebSocket ====================
+        function initWebSocket() {
+            try {
+                state.websocket = new WebSocket(CONFIG.WS_URL);
+                
+                state.websocket.onopen = () => {
+                    addLog('WebSocket 连接成功', 'success');
+                };
+                
+                state.websocket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                };
+                
+                state.websocket.onclose = () => {
+                    addLog('WebSocket 连接断开，5秒后重连...', 'warning');
+                    setTimeout(initWebSocket, 5000);
+                };
+                
+                state.websocket.onerror = (error) => {
+                    console.error('WebSocket Error:', error);
+                };
+            } catch (error) {
+                console.error('WebSocket Init Error:', error);
+            }
+        }
+
+        function initDirectorBridge() {
+            try {
+                state.directorBridge = new WebSocket(CONFIG.DIRECTOR_WS_URL);
+                
+                state.directorBridge.onopen = () => {
+                    addLog('Director\'s Bridge 连接成功', 'success');
+                };
+                
+                state.directorBridge.onmessage = (event) => {
+                    // Handle director bridge messages
+                };
+                
+                state.directorBridge.onerror = (error) => {
+                    console.error('Director Bridge Error:', error);
+                };
+            } catch (error) {
+                console.error('Director Bridge Init Error:', error);
+            }
+        }
+
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'connected':
+                    addLog(data.message, 'success');
+                    break;
+                    
+                case 'initial_data':
+                    // 初始数据加载
+                    if (data.data && data.data.flights) {
+                        state.flights = data.data.flights;
+                        renderFlightList();
+                        updateGauges();
+                        addLog(`加载了 ${data.data.count} 条航班数据`, 'success');
+                    }
+                    break;
+                    
+                case 'flight_update':
+                    handleFlightUpdate(data.data);
+                    break;
+                    
+                case 'statistics_update':
+                    // 统计数据更新
+                    updateGauges();
+                    break;
+                    
+                case 'event':
+                    handleFlightEvent(data.eventType, data.data);
+                    break;
+                    
+                case 'server_heartbeat':
+                    // Heartbeat received
+                    break;
+                    
+                case 'flight_positions_update':
+                    // 3D 位置更新
+                    if (data.data) {
+                        update3DPositions(data.data);
+                    }
+                    break;
+            }
+        }
+
+        function handleFlightUpdate(flightData) {
+            addLog(`${flightData.flightNo} 状态更新: ${getStatusText(flightData.status)}`, 'info');
+            loadFlights();
+            updateGauges();
+        }
+
+        function handleFlightEvent(eventType, eventData) {
+            if (eventType === 'landing') {
+                addLog(`${eventData.flightNo} 正在降落至 ${eventData.gateName}`, 'prediction');
+                activateVolumetricLight(eventData.gateName);
+                triggerLandingAnimation(eventData.flightNo, eventData.gateName);
+                
+                // 语音播报
+                if (state.audioEnabled) {
+                    speakText(`航班 ${eventData.flightNo} 正在降落`);
+                }
+            } else if (eventType === 'departed') {
+                addLog(`${eventData.flightNo} 已从 ${eventData.gateName} 起飞`, 'success');
+                triggerTakeoffAnimation(eventData.flightNo, eventData.gateName);
+                
+                // 语音播报
+                if (state.audioEnabled) {
+                    speakText(`航班 ${eventData.flightNo} 已起飞`);
+                }
+            }
+        }
+        
+        function update3DPositions(positions) {
+            // 更新 3D 场景中的航班位置
+            // 这里可以添加更复杂的 3D 动画逻辑
+            console.log('3D Positions updated:', positions.length);
+        }
+
+        // Send position update to Director's Bridge
+        function sendPositionToDirector(flightNo, x, y, z, rotationY, status) {
+            if (state.directorBridge && state.directorBridge.readyState === WebSocket.OPEN) {
+                state.directorBridge.send(JSON.stringify({
+                    type: 'flight_position',
+                    flightNo,
+                    position: { x, y, z },
+                    rotation: { y: rotationY },
+                    status,
+                    timestamp: Date.now()
+                }));
+            }
+        }
+
+        // Send light beam state to Director's Bridge
+        function sendLightBeamToDirector(gateName, active, color, intensity) {
+            if (state.directorBridge && state.directorBridge.readyState === WebSocket.OPEN) {
+                state.directorBridge.send(JSON.stringify({
+                    type: 'light_beam',
+                    gateName,
+                    active,
+                    color,
+                    intensity,
+                    timestamp: Date.now()
+                }));
+            }
+        }
+    </script>
+
+    <script>
+        // ==================== Three.js 3D Engine ====================
+        let scene, camera, renderer, controls, composer;
+        let airportGroup, particleSystem, clock;
+        let flightPaths = [];
+        let dataRings = [];
+        let volumetricLights = [];
+        let airplaneMeshes = {}; // Store airplane meshes by flight number
+        let lightColorTarget = new THREE.Color(0x00ffff);
+        let particleSpeedMultiplier = 1;
+
+        function init3DScene() {
+            try {
+                // 检查 Three.js 是否加载
+                if (typeof THREE === 'undefined') {
+                    console.error('Three.js 未加载，尝试重新加载...');
+                    addLog('3D 引擎加载失败，请刷新页面', 'error');
+                    return;
+                }
+
+                const canvas = document.getElementById('three-canvas');
+                const container = canvas.parentElement;
+                
+                // 确保容器有有效尺寸
+                const width = container.clientWidth || window.innerWidth * 0.5;
+                const height = container.clientHeight || window.innerHeight - 200;
+                
+                console.log('3D 场景初始化:', width, 'x', height);
+                
+                // Scene
+                scene = new THREE.Scene();
+                scene.fog = new THREE.FogExp2(0x020810, 0.015);
+                scene.background = new THREE.Color(0x020810);
+                
+                // Camera
+                camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+                camera.position.set(35, 28, 35);
+                camera.lookAt(0, 0, 0);
+                
+                // Renderer
+                renderer = new THREE.WebGLRenderer({ 
+                    canvas: canvas,
+                    antialias: true,
+                    alpha: true,
+                    powerPreference: 'high-performance'
+                });
+                renderer.setSize(width, height);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                renderer.toneMappingExposure = 1.2;
+                renderer.setClearColor(0x020810, 1);
+                
+                // Controls - 检查 OrbitControls 是否可用
+                if (THREE.OrbitControls) {
+                    controls = new THREE.OrbitControls(camera, renderer.domElement);
+                    controls.enableDamping = true;
+                    controls.dampingFactor = 0.05;
+                    controls.minDistance = 15;
+                    controls.maxDistance = 100;
+                    controls.maxPolarAngle = Math.PI / 2.2;
+                    controls.target.set(0, 0, 0);
+                } else {
+                    console.warn('OrbitControls 未加载，使用静态视角');
+                }
+                
+                // Clock
+                clock = new THREE.Clock();
+                
+                // Post-processing - 检查是否可用
+                if (THREE.EffectComposer && THREE.RenderPass && THREE.UnrealBloomPass) {
+                    setupPostProcessing();
+                } else {
+                    console.warn('后处理效果未加载，使用基础渲染');
+                    composer = null;
+                }
+                
+                // Create scene elements
+                createAirport();
+                createParticleSystem();
+                createFlightPaths();
+                createDataRings();
+                
+                // Event listeners
+                window.addEventListener('resize', onWindowResize);
+                
+                // Start animation
+                animate();
+                
+                console.log('3D 场景初始化成功!');
+                addLog('3D 全息引擎已启动', 'success');
+                
+            } catch (error) {
+                console.error('3D 场景初始化失败:', error);
+                addLog('3D 引擎初始化失败: ' + error.message, 'error');
+            }
+        }
+
+        function setupPostProcessing() {
+            composer = new THREE.EffectComposer(renderer);
+            
+            const renderPass = new THREE.RenderPass(scene, camera);
+            composer.addPass(renderPass);
+            
+            const bloomPass = new THREE.UnrealBloomPass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                1.5, // strength
+                0.4, // radius
+                0.85 // threshold
+            );
+            composer.addPass(bloomPass);
+        }
+
+        function createAirport() {
+            airportGroup = new THREE.Group();
+            
+            // Ground plane with grid
+            const groundGeometry = new THREE.PlaneGeometry(100, 100, 50, 50);
+            const groundMaterial = new THREE.MeshBasicMaterial({
+                color: 0x0a1628,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.3
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            airportGroup.add(ground);
+            
+            // Solid ground
+            const solidGroundGeometry = new THREE.PlaneGeometry(100, 100);
+            const solidGroundMaterial = new THREE.MeshBasicMaterial({
+                color: 0x020810,
+                transparent: true,
+                opacity: 0.8
+            });
+            const solidGround = new THREE.Mesh(solidGroundGeometry, solidGroundMaterial);
+            solidGround.rotation.x = -Math.PI / 2;
+            solidGround.position.y = -0.1;
+            airportGroup.add(solidGround);
+            
+            // Runways
+            createRunway(-20, 0, 40, 3, 0);
+            createRunway(20, 0, 40, 3, 0);
+            
+            // Terminal buildings
+            createTerminal(-5, 0, -12, 25, 4, 8, 'T1');
+            createTerminal(5, 0, 12, 20, 3, 6, 'T2');
+            
+            // Control tower
+            createControlTower(0, 0, 0);
+            
+            // Gates with 3D positions
+            const gatePositions = [
+                { name: 'A01', x: -15, z: -8 },
+                { name: 'A02', x: -10, z: -8 },
+                { name: 'A03', x: -5, z: -8 },
+                { name: 'A04', x: 0, z: -8 },
+                { name: 'A05', x: 5, z: -8 },
+                { name: 'B01', x: 10, z: -8 },
+                { name: 'B02', x: 15, z: -8 },
+                { name: 'B03', x: -15, z: 8 },
+                { name: 'B04', x: -10, z: 8 },
+                { name: 'B05', x: -5, z: 8 },
+                { name: 'C01', x: 0, z: 8 },
+                { name: 'C02', x: 5, z: 8 },
+                { name: 'C03', x: 10, z: 8 },
+                { name: 'C04', x: 15, z: 8 }
+            ];
+            
+            gatePositions.forEach(gate => {
+                createGate(gate.x, 0, gate.z, gate.name);
+                state.cameraTargets[gate.name] = { x: gate.x, y: 2, z: gate.z };
+            });
+            
+            // Radar
+            createRadar(-25, 0, -25);
+            
+            scene.add(airportGroup);
+        }
+
+        function createRunway(x, y, length, width, rotation) {
+            const runwayGeometry = new THREE.PlaneGeometry(length, width);
+            const runwayMaterial = new THREE.MeshBasicMaterial({
+                color: 0x1a2a3a,
+                transparent: true,
+                opacity: 0.8
+            });
+            const runway = new THREE.Mesh(runwayGeometry, runwayMaterial);
+            runway.rotation.x = -Math.PI / 2;
+            runway.rotation.z = rotation;
+            runway.position.set(x, y + 0.01, 0);
+            airportGroup.add(runway);
+            
+            // Runway lights
+            const lightCount = 10;
+            for (let i = 0; i < lightCount; i++) {
+                const lightGeometry = new THREE.CircleGeometry(0.15, 8);
+                const lightMaterial = new THREE.MeshBasicMaterial({
+                    color: i < 2 ? 0xff4444 : 0x00ff88,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                const light = new THREE.Mesh(lightGeometry, lightMaterial);
+                light.rotation.x = -Math.PI / 2;
+                light.position.set(x, 0.02, -length/2 + (i + 0.5) * (length / lightCount));
+                airportGroup.add(light);
+            }
+        }
+
+        function createTerminal(x, y, z, width, height, depth, name) {
+            // Main building
+            const buildingGeometry = new THREE.BoxGeometry(width, height, depth);
+            const buildingMaterial = new THREE.MeshBasicMaterial({
+                color: 0x0a2040,
+                transparent: true,
+                opacity: 0.6
+            });
+            const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+            building.position.set(x, y + height/2, z);
+            airportGroup.add(building);
+            
+            // Building edges
+            const edges = new THREE.EdgesGeometry(buildingGeometry);
+            const edgeMaterial = new THREE.LineBasicMaterial({ 
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.5
+            });
+            const edgeLines = new THREE.LineSegments(edges, edgeMaterial);
+            edgeLines.position.copy(building.position);
+            airportGroup.add(edgeLines);
+        }
+
+        function createControlTower(x, y, z) {
+            // Tower base
+            const baseGeometry = new THREE.CylinderGeometry(2, 2.5, 8, 8);
+            const baseMaterial = new THREE.MeshBasicMaterial({
+                color: 0x0a2040,
+                transparent: true,
+                opacity: 0.7
+            });
+            const base = new THREE.Mesh(baseGeometry, baseMaterial);
+            base.position.set(x, y + 4, z);
+            airportGroup.add(base);
+            
+            // Tower top
+            const topGeometry = new THREE.CylinderGeometry(3, 2, 3, 8);
+            const topMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.4
+            });
+            const top = new THREE.Mesh(topGeometry, topMaterial);
+            top.position.set(x, y + 9.5, z);
+            airportGroup.add(top);
+            
+            // Antenna
+            const antennaGeometry = new THREE.CylinderGeometry(0.1, 0.1, 4, 8);
+            const antennaMaterial = new THREE.MeshBasicMaterial({ color: 0xff4444 });
+            const antenna = new THREE.Mesh(antennaGeometry, antennaMaterial);
+            antenna.position.set(x, y + 13, z);
+            airportGroup.add(antenna);
+        }
+
+        function createGate(x, y, z, name) {
+            // Gate marker
+            const markerGeometry = new THREE.BoxGeometry(2, 0.5, 2);
+            const markerMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.3
+            });
+            const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+            marker.position.set(x, y + 0.25, z);
+            marker.userData = { gateName: name };
+            airportGroup.add(marker);
+            
+            // Gate edges
+            const edges = new THREE.EdgesGeometry(markerGeometry);
+            const edgeMaterial = new THREE.LineBasicMaterial({ 
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.8
+            });
+            const edgeLines = new THREE.LineSegments(edges, edgeMaterial);
+            edgeLines.position.copy(marker.position);
+            airportGroup.add(edgeLines);
+        }
+
+        function createRadar(x, y, z) {
+            // Radar base
+            const baseGeometry = new THREE.CylinderGeometry(1, 1.5, 2, 8);
+            const baseMaterial = new THREE.MeshBasicMaterial({
+                color: 0x0a2040,
+                transparent: true,
+                opacity: 0.7
+            });
+            const base = new THREE.Mesh(baseGeometry, baseMaterial);
+            base.position.set(x, y + 1, z);
+            airportGroup.add(base);
+            
+            // Radar dish
+            const dishGeometry = new THREE.ConeGeometry(3, 1, 16, 1, true);
+            const dishMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.DoubleSide
+            });
+            const dish = new THREE.Mesh(dishGeometry, dishMaterial);
+            dish.rotation.x = Math.PI / 2;
+            dish.position.set(x, y + 3, z);
+            dish.userData = { isRadar: true };
+            airportGroup.add(dish);
+        }
+
+        // ==================== Airplane Mesh (Upgraded from particles) ====================
+        function createAirplaneMesh(flightNo, color = 0x00ffff) {
+            const airplaneGroup = new THREE.Group();
+            
+            // Fuselage
+            const fuselageGeometry = new THREE.CylinderGeometry(0.3, 0.3, 2, 8);
+            const fuselageMaterial = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.9
+            });
+            const fuselage = new THREE.Mesh(fuselageGeometry, fuselageMaterial);
+            fuselage.rotation.z = Math.PI / 2;
+            airplaneGroup.add(fuselage);
+            
+            // Wings
+            const wingGeometry = new THREE.BoxGeometry(0.1, 2.5, 0.5);
+            const wingMaterial = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.8
+            });
+            const wings = new THREE.Mesh(wingGeometry, wingMaterial);
+            airplaneGroup.add(wings);
+            
+            // Tail
+            const tailGeometry = new THREE.BoxGeometry(0.1, 0.8, 0.4);
+            const tail = new THREE.Mesh(tailGeometry, wingMaterial);
+            tail.position.set(-0.8, 0.4, 0);
+            airplaneGroup.add(tail);
+            
+            // Engine glow
+            const glowGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff8800,
+                transparent: true,
+                opacity: 0.8
+            });
+            const leftGlow = new THREE.Mesh(glowGeometry, glowMaterial);
+            leftGlow.position.set(-1.1, 0.8, 0);
+            airplaneGroup.add(leftGlow);
+            
+            const rightGlow = new THREE.Mesh(glowGeometry, glowMaterial);
+            rightGlow.position.set(-1.1, -0.8, 0);
+            airplaneGroup.add(rightGlow);
+            
+            // Point light for glow effect
+            const pointLight = new THREE.PointLight(color, 2, 10);
+            pointLight.position.set(0, 0, 0);
+            airplaneGroup.add(pointLight);
+            
+            airplaneGroup.userData = { flightNo, isAirplane: true };
+            airplaneMeshes[flightNo] = airplaneGroup;
+            
+            return airplaneGroup;
+        }
+
+        function createParticleSystem() {
+            const particleCount = 500;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 100;
+                positions[i + 1] = Math.random() * 30 + 5;
+                positions[i + 2] = (Math.random() - 0.5) * 100;
+            }
+            
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const material = new THREE.PointsMaterial({
+                color: 0x00ffff,
+                size: 0.5,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            });
+            
+            particleSystem = new THREE.Points(geometry, material);
+            scene.add(particleSystem);
+        }
+
+        function createFlightPaths() {
+            // Create multiple flight paths with airplane meshes
+            const pathConfigs = [
+                { start: new THREE.Vector3(-40, 15, -30), end: new THREE.Vector3(15, 2, -8), color: 0x00ffff, flightNo: 'CA1234' },
+                { start: new THREE.Vector3(40, 20, 20), end: new THREE.Vector3(-5, 2, 8), color: 0x00ff88, flightNo: 'MU5678' },
+                { start: new THREE.Vector3(-30, 18, 40), end: new THREE.Vector3(10, 2, -8), color: 0x8844ff, flightNo: 'CZ3456' },
+                { start: new THREE.Vector3(35, 12, -35), end: new THREE.Vector3(-10, 2, 8), color: 0xffaa00, flightNo: 'HU7890' },
+                { start: new THREE.Vector3(-45, 22, 10), end: new THREE.Vector3(5, 2, -8), color: 0xff00ff, flightNo: '3U8888' }
+            ];
+            
+            pathConfigs.forEach(config => {
+                createFlightPath(config.start, config.end, config.color, config.flightNo);
+            });
+        }
+
+        function createFlightPath(start, end, color, flightNo) {
+            // Create curved path
+            const midPoint = new THREE.Vector3(
+                (start.x + end.x) / 2,
+                Math.max(start.y, end.y) + 10,
+                (start.z + end.z) / 2
+            );
+            
+            const curve = new THREE.QuadraticBezierCurve3(start, midPoint, end);
+            
+            // Path line
+            const points = curve.getPoints(50);
+            const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+            const lineMaterial = new THREE.LineBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.3
+            });
+            const line = new THREE.Line(lineGeometry, lineMaterial);
+            scene.add(line);
+            
+            // Create airplane mesh instead of particle
+            const airplane = createAirplaneMesh(flightNo, color);
+            airplane.position.copy(start);
+            scene.add(airplane);
+            
+            // Trail
+            const trailGeometry = new THREE.BufferGeometry();
+            const trailPositions = new Float32Array(30 * 3);
+            trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+            const trailMaterial = new THREE.LineBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.5
+            });
+            const trail = new THREE.Line(trailGeometry, trailMaterial);
+            scene.add(trail);
+            
+            flightPaths.push({
+                curve,
+                airplane,
+                trail,
+                progress: Math.random(),
+                speed: 0.001 + Math.random() * 0.002,
+                flightNo,
+                color
+            });
+        }
+
+        function createDataRings() {
+            const ringRadii = [25, 30, 35];
+            
+            ringRadii.forEach((radius, index) => {
+                const ringGeometry = new THREE.RingGeometry(radius - 0.2, radius, 64);
+                const ringMaterial = new THREE.MeshBasicMaterial({
+                    color: index === 0 ? 0x00ffff : index === 1 ? 0x00ff88 : 0xff00ff,
+                    transparent: true,
+                    opacity: 0.2,
+                    side: THREE.DoubleSide
+                });
+                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                ring.rotation.x = -Math.PI / 2;
+                ring.position.y = 0.5 + index * 0.5;
+                scene.add(ring);
+                
+                dataRings.push({
+                    mesh: ring,
+                    speed: 0.002 * (index + 1) * (index % 2 === 0 ? 1 : -1)
+                });
+            });
+        }
+
+        // ==================== Landing/Takeoff Animations ====================
+        function triggerLandingAnimation(flightNo, gateName) {
+            const target = state.cameraTargets[gateName];
+            if (!target) return;
+            
+            // Create or get airplane
+            let airplane = airplaneMeshes[flightNo];
+            if (!airplane) {
+                airplane = createAirplaneMesh(flightNo, 0xffaa00);
+                scene.add(airplane);
+            }
+            
+            // Starting position (high in the sky)
+            const startPos = new THREE.Vector3(
+                target.x + (Math.random() - 0.5) * 60,
+                30,
+                target.z + (Math.random() - 0.5) * 60
+            );
+            airplane.position.copy(startPos);
+            airplane.visible = true;
+            
+            // Landing animation
+            if (typeof TWEEN !== 'undefined') {
+                // Approach
+                new TWEEN.Tween(airplane.position)
+                    .to({ 
+                        x: target.x + 20, 
+                        y: 15, 
+                        z: target.z + 20 
+                    }, 3000)
+                    .easing(TWEEN.Easing.Quadratic.Out)
+                    .onUpdate(() => {
+                        // Rotate airplane to face target
+                        airplane.lookAt(target.x, target.y, target.z);
+                        // Send position to Director's Bridge
+                        sendPositionToDirector(flightNo, airplane.position.x, airplane.position.y, airplane.position.z, airplane.rotation.y, 'landing');
+                    })
+                    .start()
+                    .chain(
+                        // Final descent
+                        new TWEEN.Tween(airplane.position)
+                            .to({ 
+                                x: target.x, 
+                                y: target.y + 1, 
+                                z: target.z 
+                            }, 2000)
+                            .easing(TWEEN.Easing.Quadratic.InOut)
+                            .onUpdate(() => {
+                                sendPositionToDirector(flightNo, airplane.position.x, airplane.position.y, airplane.position.z, airplane.rotation.y, 'landing');
+                            })
+                            .onComplete(() => {
+                                // Activate volumetric light on landing
+                                activateVolumetricLight(gateName, 5000);
+                                addLog(`${flightNo} 已降落至 ${gateName}`, 'success');
+                            })
+                    );
+            }
+        }
+
+        function triggerTakeoffAnimation(flightNo, gateName) {
+            const target = state.cameraTargets[gateName];
+            if (!target) return;
+            
+            let airplane = airplaneMeshes[flightNo];
+            if (!airplane) {
+                airplane = createAirplaneMesh(flightNo, 0x00ff88);
+                scene.add(airplane);
+            }
+            
+            // Start at gate
+            airplane.position.set(target.x, target.y + 1, target.z);
+            airplane.visible = true;
+            
+            // Takeoff animation
+            if (typeof TWEEN !== 'undefined') {
+                // Taxi and lift off
+                new TWEEN.Tween(airplane.position)
+                    .to({ 
+                        x: target.x + 10, 
+                        y: 5, 
+                        z: target.z 
+                    }, 2000)
+                    .easing(TWEEN.Easing.Quadratic.In)
+                    .onUpdate(() => {
+                        sendPositionToDirector(flightNo, airplane.position.x, airplane.position.y, airplane.position.z, airplane.rotation.y, 'departed');
+                    })
+                    .start()
+                    .chain(
+                        // Climb
+                        new TWEEN.Tween(airplane.position)
+                            .to({ 
+                                x: target.x + 50, 
+                                y: 30, 
+                                z: target.z + 30 
+                            }, 3000)
+                            .easing(TWEEN.Easing.Quadratic.Out)
+                            .onUpdate(() => {
+                                airplane.rotation.x = -0.3; // Nose up
+                                sendPositionToDirector(flightNo, airplane.position.x, airplane.position.y, airplane.position.z, airplane.rotation.y, 'departed');
+                            })
+                            .onComplete(() => {
+                                airplane.visible = false;
+                                addLog(`${flightNo} 已离开空域`, 'info');
+                            })
+                    );
+                
+                // Activate light beam during takeoff
+                activateVolumetricLight(gateName, 3000);
+            }
+        }
+
+        function activateVolumetricLight(gateName, duration = 5000) {
+            const target = state.cameraTargets[gateName];
+            if (!target) return;
+            
+            // Create volumetric light beam
+            const beamGeometry = new THREE.CylinderGeometry(0.5, 3, 20, 16, 1, true);
+            const beamMaterial = new THREE.MeshBasicMaterial({
+                color: lightColorTarget,
+                transparent: true,
+                opacity: 0,
+                side: THREE.DoubleSide
+            });
+            const beam = new THREE.Mesh(beamGeometry, beamMaterial);
+            beam.position.set(target.x, target.y + 10, target.z);
+            scene.add(beam);
+            
+            volumetricLights.push({
+                mesh: beam,
+                startTime: Date.now(),
+                duration,
+                fadeIn: true,
+                gateName
+            });
+            
+            // Send to Director's Bridge
+            sendLightBeamToDirector(gateName, true, '#00ffff', 1.0);
+            
+            // Play spatial audio if enabled
+            if (state.audioEnabled && state.audioContext) {
+                playEnergySound();
+            }
+            
+            addLog(`${gateName} 光柱激活`, 'prediction');
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('three-canvas').parentElement;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            if (composer) {
+                composer.setSize(container.clientWidth, container.clientHeight);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const delta = clock ? clock.getDelta() : 0.016;
+            const elapsed = clock ? clock.getElapsedTime() : 0;
+            
+            // Update controls
+            if (controls) controls.update();
+            
+            // Update TWEEN
+            if (typeof TWEEN !== 'undefined') {
+                TWEEN.update();
+            }
+            
+            // Rotate radar
+            if (airportGroup) {
+                airportGroup.traverse(child => {
+                    if (child.userData && child.userData.isRadar) {
+                        child.rotation.y += 0.02;
+                    }
+                });
+            }
+            
+            // Update particles
+            if (particleSystem) {
+                const positions = particleSystem.geometry.attributes.position.array;
+                for (let i = 0; i < positions.length; i += 3) {
+                    positions[i] += (Math.random() - 0.5) * 0.1 * particleSpeedMultiplier;
+                    positions[i + 1] += Math.sin(elapsed + i) * 0.02 * particleSpeedMultiplier;
+                    positions[i + 2] += (Math.random() - 0.5) * 0.1 * particleSpeedMultiplier;
+                    
+                    if (Math.abs(positions[i]) > 50) positions[i] = (Math.random() - 0.5) * 100;
+                    if (positions[i + 1] > 40 || positions[i + 1] < 5) positions[i + 1] = Math.random() * 30 + 5;
+                    if (Math.abs(positions[i + 2]) > 50) positions[i + 2] = (Math.random() - 0.5) * 100;
+                }
+                particleSystem.geometry.attributes.position.needsUpdate = true;
+            }
+            
+            // Update flight paths with airplane meshes
+            flightPaths.forEach(path => {
+                path.progress += path.speed * particleSpeedMultiplier;
+                if (path.progress > 1) path.progress = 0;
+                
+                const point = path.curve.getPoint(path.progress);
+                const nextPoint = path.curve.getPoint(Math.min(path.progress + 0.01, 1));
+                
+                path.airplane.position.copy(point);
+                path.airplane.lookAt(nextPoint);
+                
+                // Update trail
+                const trailPositions = path.trail.geometry.attributes.position.array;
+                for (let i = trailPositions.length - 3; i >= 3; i -= 3) {
+                    trailPositions[i] = trailPositions[i - 3];
+                    trailPositions[i + 1] = trailPositions[i - 2];
+                    trailPositions[i + 2] = trailPositions[i - 1];
+                }
+                trailPositions[0] = point.x;
+                trailPositions[1] = point.y;
+                trailPositions[2] = point.z;
+                path.trail.geometry.attributes.position.needsUpdate = true;
+            });
+            
+            // Update data rings
+            dataRings.forEach(ring => {
+                ring.mesh.rotation.z += ring.speed;
+            });
+            
+            // Update volumetric lights
+            volumetricLights = volumetricLights.filter(light => {
+                const elapsedTime = Date.now() - light.startTime;
+                const progress = elapsedTime / light.duration;
+                
+                if (progress < 0.2) {
+                    light.mesh.material.opacity = progress * 5 * 0.4;
+                } else if (progress < 0.8) {
+                    light.mesh.material.opacity = 0.4;
+                } else if (progress < 1) {
+                    light.mesh.material.opacity = (1 - progress) * 5 * 0.4;
+                } else {
+                    scene.remove(light.mesh);
+                    sendLightBeamToDirector(light.gateName, false, '#00ffff', 0);
+                    return false;
+                }
+                
+                light.mesh.material.color.lerp(lightColorTarget, 0.05);
+                return true;
+            });
+            
+            // Render
+            if (composer) {
+                composer.render();
+            } else {
+                renderer.render(scene, camera);
+            }
+        }
+    </script>
+
+    <script>
+        // ==================== Data Loading ====================
+        async function loadFlights() {
+            const data = await fetchAPI('/flights');
+            if (data) {
+                state.flights = data;
+            } else {
+                // Mock data
+                state.flights = [
+                    { id: 1, flightNo: 'CA1234', airlineId: 1, airlineName: '中国国际航空', departureCity: '北京', arrivalCity: '上海', scheduledTime: '2026-01-10T06:30:00', status: 'arrived', gateName: 'A01', gateId: 1, passengerCount: 180 },
+                    { id: 2, flightNo: 'MU5678', airlineId: 2, airlineName: '中国东方航空', departureCity: '上海', arrivalCity: '广州', scheduledTime: '2026-01-10T07:15:00', status: 'landing', gateName: 'A03', gateId: 3, passengerCount: 165 },
+                    { id: 3, flightNo: 'CZ3456', airlineId: 3, airlineName: '中国南方航空', departureCity: '广州', arrivalCity: '北京', scheduledTime: '2026-01-10T08:00:00', status: 'departed', gateName: 'B01', gateId: 6, passengerCount: 200 },
+                    { id: 4, flightNo: 'HU7890', airlineId: 4, airlineName: '海南航空', departureCity: '海口', arrivalCity: '成都', scheduledTime: '2026-01-10T08:45:00', status: 'landing', gateName: 'B02', gateId: 7, passengerCount: 155 },
+                    { id: 5, flightNo: '3U8888', airlineId: 5, airlineName: '四川航空', departureCity: '成都', arrivalCity: '杭州', scheduledTime: '2026-01-10T09:30:00', status: 'boarding', gateName: 'B04', gateId: 9, passengerCount: 170 },
+                    { id: 6, flightNo: 'ZH9999', airlineId: 6, airlineName: '深圳航空', departureCity: '深圳', arrivalCity: '西安', scheduledTime: '2026-01-10T10:15:00', status: 'boarding', gateName: 'C01', gateId: 11, passengerCount: 145 },
+                    { id: 7, flightNo: 'CA2468', airlineId: 1, airlineName: '中国国际航空', departureCity: '西安', arrivalCity: '上海', scheduledTime: '2026-01-10T11:00:00', status: 'boarding', gateName: 'A02', gateId: 2, passengerCount: 190 },
+                    { id: 8, flightNo: 'MU1357', airlineId: 2, airlineName: '中国东方航空', departureCity: '杭州', arrivalCity: '北京', scheduledTime: '2026-01-10T11:45:00', status: 'boarding', gateName: 'A05', gateId: 5, passengerCount: 175 },
+                    { id: 9, flightNo: 'CZ2468', airlineId: 3, airlineName: '中国南方航空', departureCity: '北京', arrivalCity: '深圳', scheduledTime: '2026-01-10T12:30:00', status: 'delayed', gateName: 'B03', gateId: 8, passengerCount: 185 },
+                    { id: 10, flightNo: 'HU1234', airlineId: 4, airlineName: '海南航空', departureCity: '成都', arrivalCity: '上海', scheduledTime: '2026-01-10T13:15:00', status: 'boarding', gateName: 'B05', gateId: 10, passengerCount: 160 }
+                ];
+            }
+            renderFlightList();
+            updateGauges();
+        }
+
+        async function loadGates() {
+            const data = await fetchAPI('/gates');
+            if (data) {
+                state.gates = data;
+            } else {
+                // Mock data
+                state.gates = [
+                    { id: 1, name: 'A01', terminal: 'T1', status: 'busy' },
+                    { id: 2, name: 'A02', terminal: 'T1', status: 'busy' },
+                    { id: 3, name: 'A03', terminal: 'T1', status: 'busy' },
+                    { id: 4, name: 'A04', terminal: 'T1', status: 'available' },
+                    { id: 5, name: 'A05', terminal: 'T1', status: 'busy' },
+                    { id: 6, name: 'B01', terminal: 'T2', status: 'busy' },
+                    { id: 7, name: 'B02', terminal: 'T2', status: 'busy' },
+                    { id: 8, name: 'B03', terminal: 'T2', status: 'busy' },
+                    { id: 9, name: 'B04', terminal: 'T2', status: 'busy' },
+                    { id: 10, name: 'B05', terminal: 'T2', status: 'busy' },
+                    { id: 11, name: 'C01', terminal: 'T3', status: 'busy' },
+                    { id: 12, name: 'C02', terminal: 'T3', status: 'available' }
+                ];
+            }
+            renderGateGrid();
+        }
+
+        async function loadAirlines() {
+            const data = await fetchAPI('/airlines');
+            if (data) {
+                state.airlines = data;
+            } else {
+                state.airlines = [
+                    { id: 1, code: 'CA', name: '中国国际航空' },
+                    { id: 2, code: 'MU', name: '中国东方航空' },
+                    { id: 3, code: 'CZ', name: '中国南方航空' },
+                    { id: 4, code: 'HU', name: '海南航空' },
+                    { id: 5, code: '3U', name: '四川航空' },
+                    { id: 6, code: 'ZH', name: '深圳航空' },
+                    { id: 7, code: 'FM', name: '上海航空' },
+                    { id: 8, code: 'SC', name: '山东航空' }
+                ];
+            }
+            populateAirlineSelect();
+        }
+
+        async function loadParkingLots() {
+            const data = await fetchAPI('/parking');
+            if (data) {
+                state.parkingLots = data;
+            } else {
+                state.parkingLots = [
+                    { id: 1, name: 'P1 航站楼停车场', zone: 'P1', totalSpaces: 500, occupiedSpaces: 320, hourlyRate: 15.00 },
+                    { id: 2, name: 'P2 长期停车场', zone: 'P2', totalSpaces: 800, occupiedSpaces: 450, hourlyRate: 8.00 },
+                    { id: 3, name: 'P3 贵宾停车场', zone: 'P3', totalSpaces: 100, occupiedSpaces: 35, hourlyRate: 30.00 },
+                    { id: 4, name: 'P4 员工停车场', zone: 'P4', totalSpaces: 300, occupiedSpaces: 180, hourlyRate: 5.00 }
+                ];
+            }
+            updateParkingStats();
+        }
+
+        // ==================== UI Rendering ====================
+        function renderFlightList() {
+            const container = document.getElementById('flightList');
+            let flights = [...state.flights];
+            
+            // Apply filter
+            if (state.currentFilter !== 'all') {
+                flights = flights.filter(f => f.status === state.currentFilter);
+            }
+            
+            // Apply search
+            if (state.searchQuery) {
+                const query = state.searchQuery.toLowerCase();
+                flights = flights.filter(f => 
+                    f.flightNo.toLowerCase().includes(query) ||
+                    f.departureCity.toLowerCase().includes(query) ||
+                    f.arrivalCity.toLowerCase().includes(query) ||
+                    (f.gateName && f.gateName.toLowerCase().includes(query))
+                );
+            }
+            
+            container.innerHTML = flights.slice(0, 8).map(flight => `
+                <div class="flight-card ${state.highlightedItems.includes(flight.flightNo) ? 'highlighted' : ''}" 
+                     onclick="showFlightDetail(${flight.id})"
+                     data-flight-no="${flight.flightNo}">
+                    <div class="flight-header">
+                        <span class="flight-no">${flight.flightNo}</span>
+                        <span class="flight-status ${flight.status}">${getStatusText(flight.status)}</span>
+                    </div>
+                    <div class="flight-route">${flight.departureCity} → ${flight.arrivalCity}</div>
+                    <div class="flight-info">
+                        <span>${formatTime(flight.scheduledTime)}</span>
+                        <span class="flight-gate">${flight.gateName || '未分配'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderGateGrid() {
+            const container = document.getElementById('gateGrid');
+            container.innerHTML = state.gates.slice(0, 12).map(gate => `
+                <div class="gate-item ${gate.status} ${state.highlightedItems.includes(gate.name) ? 'highlighted' : ''}" 
+                     onclick="focusOnGate('${gate.name}')"
+                     data-gate-name="${gate.name}">
+                    <div class="gate-name">${gate.name}</div>
+                    <div class="gate-status">${getGateStatusText(gate.status)}</div>
+                </div>
+            `).join('');
+        }
+
+        function updateGauges() {
+            const totalFlights = state.flights.length;
+            const delayedFlights = state.flights.filter(f => f.status === 'delayed').length;
+            const onTimeFlights = state.flights.filter(f => f.status !== 'delayed' && f.status !== 'cancelled').length;
+            const onTimeRate = totalFlights > 0 ? Math.round((onTimeFlights / totalFlights) * 100) : 0;
+            const totalPassengers = state.flights.reduce((sum, f) => sum + (f.passengerCount || 0), 0);
+            
+            // Update values
+            document.getElementById('flightCount').textContent = totalFlights;
+            document.getElementById('onTimeRate').textContent = onTimeRate + '%';
+            document.getElementById('delayCount').textContent = delayedFlights;
+            document.getElementById('passengerCount').textContent = totalPassengers;
+            
+            // Update gauge fills
+            updateGaugeFill('flightGauge', totalFlights / 20);
+            updateGaugeFill('onTimeGauge', onTimeRate / 100);
+            updateGaugeFill('delayGauge', delayedFlights / 10);
+            updateGaugeFill('passengerGauge', totalPassengers / 10000);
+        }
+
+        function updateGaugeFill(id, percentage) {
+            const gauge = document.getElementById(id);
+            if (gauge) {
+                const circumference = 201.06;
+                const offset = circumference * (1 - Math.min(percentage, 1));
+                gauge.style.strokeDashoffset = offset;
+            }
+        }
+
+        function updateParkingStats() {
+            const totalSpaces = state.parkingLots.reduce((sum, p) => sum + p.totalSpaces, 0);
+            const occupiedSpaces = state.parkingLots.reduce((sum, p) => sum + p.occupiedSpaces, 0);
+            const availableSpaces = totalSpaces - occupiedSpaces;
+            
+            document.getElementById('availableSpaces').textContent = availableSpaces;
+            document.getElementById('occupiedSpaces').textContent = occupiedSpaces;
+        }
+
+        function populateAirlineSelect() {
+            const select = document.getElementById('airlineId');
+            select.innerHTML = '<option value="">选择航空公司</option>' +
+                state.airlines.map(a => `<option value="${a.id}">${a.code} - ${a.name}</option>`).join('');
+        }
+
+        function populateGateSelect() {
+            const select = document.getElementById('gateId');
+            select.innerHTML = '<option value="">选择登机口</option>' +
+                state.gates.filter(g => g.status === 'available').map(g => 
+                    `<option value="${g.id}">${g.name} (${g.terminal})</option>`
+                ).join('');
+        }
+
+        // ==================== Helper Functions ====================
+        function getStatusText(status) {
+            const statusMap = {
+                'scheduled': '计划中',
+                'boarding': '登机中',
+                'departed': '已起飞',
+                'landing': '降落中',
+                'arrived': '已到达',
+                'delayed': '延误',
+                'cancelled': '取消'
+            };
+            return statusMap[status] || status;
+        }
+
+        function getGateStatusText(status) {
+            const statusMap = {
+                'available': '空闲',
+                'busy': '使用中',
+                'maintenance': '维护中',
+                'closed': '关闭'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatTime(dateStr) {
+            if (!dateStr) return '--:--';
+            const date = new Date(dateStr);
+            return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('systemLog');
+            const time = new Date().toLocaleTimeString('zh-CN');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-message">${message}</span>
+            `;
+            logContainer.insertBefore(entry, logContainer.firstChild);
+            
+            // Keep only last 50 entries
+            while (logContainer.children.length > 50) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+
+        // ==================== Filter and Search ====================
+        function filterFlights(status) {
+            state.currentFilter = status;
+            renderFlightList();
+            
+            // Update 3D visualization
+            if (status === 'delayed') {
+                lightColorTarget.setHex(0xff4444);
+                particleSpeedMultiplier = 0.5;
+            } else if (status === 'landing') {
+                lightColorTarget.setHex(0xffaa00);
+                particleSpeedMultiplier = 1.5;
+            } else if (status === 'boarding') {
+                lightColorTarget.setHex(0x00ff88);
+                particleSpeedMultiplier = 1;
+            } else {
+                lightColorTarget.setHex(0x00ffff);
+                particleSpeedMultiplier = 1;
+            }
+            
+            addLog(`筛选: ${getStatusText(status)} 航班`, 'info');
+        }
+
+        function handleGlobalSearch(query) {
+            state.searchQuery = query;
+            renderFlightList();
+            
+            if (query) {
+                // Highlight matching items
+                state.highlightedItems = [];
+                state.flights.forEach(f => {
+                    if (f.flightNo.toLowerCase().includes(query.toLowerCase()) ||
+                        f.departureCity.toLowerCase().includes(query.toLowerCase()) ||
+                        f.arrivalCity.toLowerCase().includes(query.toLowerCase())) {
+                        state.highlightedItems.push(f.flightNo);
+                        if (f.gateName) state.highlightedItems.push(f.gateName);
+                    }
+                });
+                renderGateGrid();
+            } else {
+                state.highlightedItems = [];
+                renderGateGrid();
+            }
+        }
+
+        function focusOnGate(gateName) {
+            const target = state.cameraTargets[gateName];
+            if (!target || !camera) return;
+            
+            // Highlight the gate
+            state.highlightedItems = [gateName];
+            renderGateGrid();
+            
+            // Animate camera to gate
+            if (typeof TWEEN !== 'undefined') {
+                new TWEEN.Tween(camera.position)
+                    .to({ 
+                        x: target.x + 15, 
+                        y: target.y + 12, 
+                        z: target.z + 15 
+                    }, 1500)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .start();
+                
+                new TWEEN.Tween(controls.target)
+                    .to({ x: target.x, y: target.y, z: target.z }, 1500)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .start();
+            }
+            
+            // Activate light beam
+            activateVolumetricLight(gateName, 3000);
+            
+            addLog(`聚焦登机口: ${gateName}`, 'info');
+        }
+
+        function resetCamera() {
+            if (typeof TWEEN !== 'undefined' && camera) {
+                new TWEEN.Tween(camera.position)
+                    .to({ x: 35, y: 28, z: 35 }, 1500)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .start();
+                
+                new TWEEN.Tween(controls.target)
+                    .to({ x: 0, y: 0, z: 0 }, 1500)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .start();
+            }
+            
+            state.highlightedItems = [];
+            renderGateGrid();
+            renderFlightList();
+        }
+
+        // ==================== Timeline / Prediction Mode ====================
+        function handleTimelineChange(value) {
+            const hours = parseInt(value);
+            state.predictionMode = hours !== 0;
+            state.predictionHours = hours;
+            
+            const badge = document.getElementById('predictionBadge');
+            const timelineValue = document.getElementById('timelineValue');
+            const predictionTime = document.getElementById('predictionTime');
+            
+            if (hours !== 0) {
+                badge.classList.add('active');
+                const sign = hours > 0 ? '+' : '';
+                predictionTime.textContent = `${sign}${hours}小时`;
+                timelineValue.textContent = `${sign}${hours}小时`;
+                
+                // Change visual style for prediction mode
+                lightColorTarget.setHex(0xffaa00);
+                particleSpeedMultiplier = 1.5;
+                
+                addLog(`预测模式: ${sign}${hours}小时`, 'prediction');
+            } else {
+                badge.classList.remove('active');
+                timelineValue.textContent = '现在';
+                lightColorTarget.setHex(0x00ffff);
+                particleSpeedMultiplier = 1;
+            }
+            
+            // Update congestion indicator
+            const congestion = Math.min(100, 50 + Math.abs(hours) * 10 + Math.random() * 20);
+            document.getElementById('congestionValue').textContent = Math.round(congestion) + '%';
+            document.getElementById('congestionValue').style.color = 
+                congestion > 80 ? 'var(--accent-red)' : 
+                congestion > 60 ? 'var(--accent-amber)' : 'var(--accent-green)';
+        }
+
+        // ==================== Voice Recognition ====================
+        function initVoiceRecognition() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                addLog('浏览器不支持语音识别', 'warning');
+                return;
+            }
+            
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            state.recognition = new SpeechRecognition();
+            state.recognition.continuous = true;
+            state.recognition.interimResults = true;
+            state.recognition.lang = 'zh-CN';
+            
+            state.recognition.onresult = async (event) => {
+                const result = event.results[event.results.length - 1];
+                const transcript = result[0].transcript.trim();
+                
+                if (result.isFinal) {
+                    // Check for wake word
+                    const lower = transcript.toLowerCase();
+                    if (lower.includes('lumière') || lower.includes('先知') || 
+                        lower.includes('卢米埃') || lower.includes('光')) {
+                        
+                        // Extract command after wake word
+                        let command = transcript;
+                        ['lumière', '先知', '卢米埃', '光'].forEach(wake => {
+                            const idx = lower.indexOf(wake);
+                            if (idx !== -1) {
+                                command = transcript.substring(idx + wake.length).trim();
+                            }
+                        });
+                        
+                        if (command) {
+                            addLog(`语音指令: ${command}`, 'info');
+                            
+                            // Use DeepSeek AI for intent recognition
+                            await DeepSeekAI.processCommand(command);
+                        }
+                    }
+                }
+            };
+            
+            state.recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                if (event.error !== 'no-speech') {
+                    addLog(`语音识别错误: ${event.error}`, 'error');
+                }
+            };
+            
+            state.recognition.onend = () => {
+                if (state.isVoiceActive) {
+                    state.recognition.start();
+                }
+            };
+        }
+
+        function toggleVoice() {
+            state.isVoiceActive = !state.isVoiceActive;
+            const panel = document.getElementById('voicePanel');
+            const btn = document.getElementById('voiceToggle');
+            
+            if (state.isVoiceActive) {
+                panel.classList.add('active');
+                btn.classList.add('active');
+                if (state.recognition) {
+                    state.recognition.start();
+                }
+                addLog('语音识别已启动', 'success');
+            } else {
+                panel.classList.remove('active');
+                btn.classList.remove('active');
+                if (state.recognition) {
+                    state.recognition.stop();
+                }
+                addLog('语音识别已停止', 'info');
+            }
+        }
+
+        // ==================== Audio ====================
+        function initAudio() {
+            try {
+                state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.error('Audio context not supported');
+            }
+        }
+
+        function toggleAudio() {
+            state.audioEnabled = !state.audioEnabled;
+            const btn = document.getElementById('audioToggle');
+            btn.classList.toggle('active', state.audioEnabled);
+            btn.innerHTML = state.audioEnabled ? 
+                '<i class="bi bi-volume-up"></i>' : 
+                '<i class="bi bi-volume-mute"></i>';
+            
+            if (state.audioEnabled && !state.audioContext) {
+                initAudio();
+            }
+            
+            addLog(state.audioEnabled ? '语音播报已开启' : '语音播报已关闭', 'info');
+        }
+        
+        /**
+         * TTS 语音播报（使用浏览器原生 API）
+         */
+        function speakText(text) {
+            if (!state.audioEnabled) return;
+            
+            try {
+                // 停止当前播报
+                window.speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-CN';
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                utterance.volume = 0.8;
+                
+                window.speechSynthesis.speak(utterance);
+                
+                addLog('🔊 语音播报: ' + text, 'info');
+            } catch (error) {
+                console.error('TTS Error:', error);
+            }
+        }
+
+        function playEnergySound() {
+            if (!state.audioContext || !state.audioEnabled) return;
+            
+            const oscillator = state.audioContext.createOscillator();
+            const gainNode = state.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(state.audioContext.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, state.audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(880, state.audioContext.currentTime + 0.5);
+            
+            gainNode.gain.setValueAtTime(0.1, state.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, state.audioContext.currentTime + 0.5);
+            
+            oscillator.start(state.audioContext.currentTime);
+            oscillator.stop(state.audioContext.currentTime + 0.5);
+        }
+
+        // ==================== System Time ====================
+        function updateSystemTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: false 
+            });
+            document.getElementById('systemTime').textContent = timeStr;
+        }
+
+        // ==================== Navigation ====================
+        function showDashboard() {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.nav-btn').classList.add('active');
+        }
+
+        function showFlightManagement() {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.nav-btn').classList.add('active');
+            openFlightModal();
+        }
+
+        function showGateManagement() {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.nav-btn').classList.add('active');
+            openGateModal();
+        }
+
+        function showAirlineManagement() {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.nav-btn').classList.add('active');
+            openAirlineModal();
+        }
+
+        function showParkingManagement() {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.nav-btn').classList.add('active');
+            openParkingModal();
+        }
+    </script>
+
+    <script>
+        // ==================== CRUD Operations ====================
+        
+        // Flight CRUD
+        function openFlightModal(flight = null) {
+            const modal = new bootstrap.Modal(document.getElementById('flightModal'));
+            document.getElementById('flightModalTitle').textContent = flight ? '编辑航班' : '新增航班';
+            
+            if (flight) {
+                document.getElementById('flightId').value = flight.id;
+                document.getElementById('flightNo').value = flight.flightNo;
+                document.getElementById('airlineId').value = flight.airlineId;
+                document.getElementById('departureCity').value = flight.departureCity;
+                document.getElementById('arrivalCity').value = flight.arrivalCity;
+                document.getElementById('scheduledTime').value = flight.scheduledTime ? flight.scheduledTime.substring(0, 16) : '';
+                document.getElementById('gateId').value = flight.gateId || '';
+                document.getElementById('flightStatus').value = flight.status;
+                document.getElementById('passengerCountInput').value = flight.passengerCount || '';
+            } else {
+                document.getElementById('flightForm').reset();
+                document.getElementById('flightId').value = '';
+            }
+            
+            populateGateSelect();
+            modal.show();
+        }
+
+        async function saveFlight() {
+            const id = document.getElementById('flightId').value;
+            const data = {
+                flightNo: document.getElementById('flightNo').value,
+                airlineId: parseInt(document.getElementById('airlineId').value),
+                departureCity: document.getElementById('departureCity').value,
+                arrivalCity: document.getElementById('arrivalCity').value,
+                scheduledTime: document.getElementById('scheduledTime').value,
+                gateId: document.getElementById('gateId').value ? parseInt(document.getElementById('gateId').value) : null,
+                status: document.getElementById('flightStatus').value,
+                passengerCount: parseInt(document.getElementById('passengerCountInput').value) || 0
+            };
+            
+            try {
+                if (id) {
+                    await fetchAPI(`/flights/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+                    addLog(`航班 ${data.flightNo} 已更新`, 'success');
+                } else {
+                    await fetchAPI('/flights', { method: 'POST', body: JSON.stringify(data) });
+                    addLog(`航班 ${data.flightNo} 已创建`, 'success');
+                }
+                
+                bootstrap.Modal.getInstance(document.getElementById('flightModal')).hide();
+                loadFlights();
+                
+                // Trigger animation if status is landing or departed
+                if (data.status === 'landing') {
+                    const gate = state.gates.find(g => g.id === data.gateId);
+                    if (gate) triggerLandingAnimation(data.flightNo, gate.name);
+                } else if (data.status === 'departed') {
+                    const gate = state.gates.find(g => g.id === data.gateId);
+                    if (gate) triggerTakeoffAnimation(data.flightNo, gate.name);
+                }
+            } catch (error) {
+                addLog(`保存失败: ${error.message}`, 'error');
+            }
+        }
+
+        function showFlightDetail(id) {
+            const flight = state.flights.find(f => f.id === id);
+            if (flight) {
+                openFlightModal(flight);
+            }
+        }
+
+        async function deleteFlight(id) {
+            if (!confirm('确定要删除这个航班吗？')) return;
+            
+            try {
+                await fetchAPI(`/flights/${id}`, { method: 'DELETE' });
+                addLog('航班已删除', 'success');
+                loadFlights();
+            } catch (error) {
+                addLog(`删除失败: ${error.message}`, 'error');
+            }
+        }
+
+        // Gate CRUD
+        function openGateModal(gate = null) {
+            const modal = new bootstrap.Modal(document.getElementById('gateModal'));
+            document.getElementById('gateModalTitle').textContent = gate ? '编辑登机口' : '新增登机口';
+            
+            if (gate) {
+                document.getElementById('gateIdInput').value = gate.id;
+                document.getElementById('gateName').value = gate.name;
+                document.getElementById('gateTerminal').value = gate.terminal;
+                document.getElementById('gateStatus').value = gate.status;
+            } else {
+                document.getElementById('gateForm').reset();
+                document.getElementById('gateIdInput').value = '';
+            }
+            
+            modal.show();
+        }
+
+        async function saveGate() {
+            const id = document.getElementById('gateIdInput').value;
+            const data = {
+                name: document.getElementById('gateName').value,
+                terminal: document.getElementById('gateTerminal').value,
+                status: document.getElementById('gateStatus').value
+            };
+            
+            try {
+                if (id) {
+                    await fetchAPI(`/gates/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+                    addLog(`登机口 ${data.name} 已更新`, 'success');
+                } else {
+                    await fetchAPI('/gates', { method: 'POST', body: JSON.stringify(data) });
+                    addLog(`登机口 ${data.name} 已创建`, 'success');
+                }
+                
+                bootstrap.Modal.getInstance(document.getElementById('gateModal')).hide();
+                loadGates();
+            } catch (error) {
+                addLog(`保存失败: ${error.message}`, 'error');
+            }
+        }
+
+        // Airline CRUD
+        function openAirlineModal(airline = null) {
+            const modal = new bootstrap.Modal(document.getElementById('airlineModal'));
+            document.getElementById('airlineModalTitle').textContent = airline ? '编辑航空公司' : '新增航空公司';
+            
+            if (airline) {
+                document.getElementById('airlineIdInput').value = airline.id;
+                document.getElementById('airlineCode').value = airline.code;
+                document.getElementById('airlineName').value = airline.name;
+                document.getElementById('airlineNameEn').value = airline.nameEn || '';
+                document.getElementById('airlinePhone').value = airline.phone || '';
+            } else {
+                document.getElementById('airlineForm').reset();
+                document.getElementById('airlineIdInput').value = '';
+            }
+            
+            modal.show();
+        }
+
+        async function saveAirline() {
+            const id = document.getElementById('airlineIdInput').value;
+            const data = {
+                code: document.getElementById('airlineCode').value,
+                name: document.getElementById('airlineName').value,
+                nameEn: document.getElementById('airlineNameEn').value,
+                phone: document.getElementById('airlinePhone').value
+            };
+            
+            try {
+                if (id) {
+                    await fetchAPI(`/airlines/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+                    addLog(`航空公司 ${data.name} 已更新`, 'success');
+                } else {
+                    await fetchAPI('/airlines', { method: 'POST', body: JSON.stringify(data) });
+                    addLog(`航空公司 ${data.name} 已创建`, 'success');
+                }
+                
+                bootstrap.Modal.getInstance(document.getElementById('airlineModal')).hide();
+                loadAirlines();
+            } catch (error) {
+                addLog(`保存失败: ${error.message}`, 'error');
+            }
+        }
+
+        // Parking CRUD
+        function openParkingModal(parking = null) {
+            const modal = new bootstrap.Modal(document.getElementById('parkingModal'));
+            document.getElementById('parkingModalTitle').textContent = parking ? '编辑停车场' : '新增停车场';
+            
+            if (parking) {
+                document.getElementById('parkingIdInput').value = parking.id;
+                document.getElementById('parkingName').value = parking.name;
+                document.getElementById('parkingZone').value = parking.zone;
+                document.getElementById('totalSpaces').value = parking.totalSpaces;
+                document.getElementById('hourlyRate').value = parking.hourlyRate;
+            } else {
+                document.getElementById('parkingForm').reset();
+                document.getElementById('parkingIdInput').value = '';
+            }
+            
+            modal.show();
+        }
+
+        async function saveParking() {
+            const id = document.getElementById('parkingIdInput').value;
+            const data = {
+                name: document.getElementById('parkingName').value,
+                zone: document.getElementById('parkingZone').value,
+                totalSpaces: parseInt(document.getElementById('totalSpaces').value),
+                hourlyRate: parseFloat(document.getElementById('hourlyRate').value) || 0
+            };
+            
+            try {
+                if (id) {
+                    await fetchAPI(`/parking/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+                    addLog(`停车场 ${data.name} 已更新`, 'success');
+                } else {
+                    await fetchAPI('/parking', { method: 'POST', body: JSON.stringify(data) });
+                    addLog(`停车场 ${data.name} 已创建`, 'success');
+                }
+                
+                bootstrap.Modal.getInstance(document.getElementById('parkingModal')).hide();
+                loadParkingLots();
+            } catch (error) {
+                addLog(`保存失败: ${error.message}`, 'error');
+            }
+        }
+
+        // ==================== Initialization ====================
+        async function init() {
+            console.log('Lumière 6.5 Singularity 启动中...');
+            
+            // Update system time
+            updateSystemTime();
+            setInterval(updateSystemTime, 1000);
+            
+            // 延迟初始化 3D 场景，确保 DOM 完全渲染
+            setTimeout(() => {
+                init3DScene();
+            }, 100);
+            
+            // Initialize voice recognition
+            initVoiceRecognition();
+            
+            // Initialize audio
+            initAudio();
+            
+            // Load data
+            await Promise.all([
+                loadFlights(),
+                loadGates(),
+                loadAirlines(),
+                loadParkingLots()
+            ]);
+            
+            // Initialize WebSocket
+            initWebSocket();
+            initDirectorBridge();
+            
+            // Add initial log
+            addLog('Lumière 6.0 Final Singularity 系统启动', 'success');
+            addLog('DeepSeek AI 大脑已就绪', 'ai');
+            addLog('Director\'s Bridge 虚拟制片接口已激活', 'prediction');
+            
+            // Simulate some initial events
+            setTimeout(() => {
+                addLog('WebSocket 心跳 ♥', 'success');
+            }, 3000);
+            
+            setTimeout(() => {
+                // Trigger a demo landing animation
+                triggerLandingAnimation('MU5678', 'A03');
+            }, 5000);
+        }
+
+        // Start the application
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
