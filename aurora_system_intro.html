@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurora-Panel 多用户中转与订阅管理系统介绍</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0f12;
+            --card-bg: rgba(22, 28, 36, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent-color: #3b82f6;
+            --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            --neon-glow: 0 0 20px rgba(59, 130, 246, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.6;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: var(--neon-glow), 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        h2::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background: var(--accent-gradient);
+            border-radius: 2px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        ul {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        li {
+            position: relative;
+            padding-left: 24px;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .tag {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .grid-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .grid-item h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+
+        pre {
+            background: #050709;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            margin-top: 15px;
+        }
+
+        code {
+            color: #e5e7eb;
+        }
+
+        .keyword { color: #f472b6; }
+        .function { color: #60a5fa; }
+        .string { color: #34d399; }
+        .comment { color: #6b7280; }
+
+        .footer {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 50px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+        }
+
+        .footer a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">Aurora-Panel</div>
+            <div class="subtitle">多用户中转与订阅管理系统 (Airport Management System)</div>
+        </header>
+
+        <div class="card">
+            <h2>系统定位 & 商业价值</h2>
+            <p>Aurora-Panel 是一款专为高速网络中转服务商设计的高性能、高容错订阅管理与计费面板。解决的核心痛点是：<b>高并发下的流控阻断、自动化的多客户端配置订阅生成、以及全自动的支付开通流程。</b></p>
+            <div style="margin-top: 15px;">
+                <span class="tag">分布式架构</span>
+                <span class="tag">多协议支持</span>
+                <span class="tag">一键部署</span>
+                <span class="tag">防封安全</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>核心技术架构</h2>
+            <div class="grid">
+                <div class="grid-item">
+                    <h3>前端用户/管理面板</h3>
+                    <p>基于 React/Vite 框架与 Tailwind CSS 构建，提供响应式移动端适配，包含完整的账单流、节点状态监控与工单系统。</p>
+                </div>
+                <div class="grid-item">
+                    <h3>后端计费 API 核心</h3>
+                    <p>采用 PHP Laravel 框架开发，处理套餐周期计费、三方支付回调接口，支持高频缓存（Redis）承载订阅请求。</p>
+                </div>
+                <div class="grid-item">
+                    <h3>节点同步守护进程 (Daemon)</h3>
+                    <p>采用 Go/Python 编写，定时从 API 拉取活跃用户 UUID 同步到代理内核（Xray / Hysteria 2 / TUIC），实现秒级流量结算。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>系统亮点功能</h2>
+            <ul>
+                <li><b>主流代理协议全覆盖</b>：原生支持 VLESS Reality, VMess gRPC, Trojan 以及目前吞吐性能极佳的 Hysteria 2。</li>
+                <li><b>内置订阅转换 (Subconverter)</b>：无需依赖外部接口，主站自动生成适配 Clash, Shadowrocket, Surge 等客户端配置。</li>
+                <li><b>微信/支付宝/数字货币聚合支付</b>：支持三方易支付自动回调开通套餐，实现完全无人值守自动运维。</li>
+                <li><b>精细化流控限速</b>：可对单个节点、单个用户设置独立的限速、限流以及最大在线 IP 客户端限制。</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>节点同步核心代码示例 (Go/Python Daemon)</h2>
+            <p>后端节点通过安全的 Handshake 密钥通信，定期拉取活跃用户配置并上报流量数据：</p>
+            <pre><code><span class="comment"># 节点流量统计与授权校验守护进程示例</span>
+<span class="keyword">import</span> time
+<span class="keyword">import</span> requests
+
+PANEL_URL = <span class="string">"http://your-panel.com/api/v1/node"</span>
+NODE_KEY = <span class="string">"node_secure_auth_key_12345"</span>
+NODE_ID = 5
+
+<span class="keyword">class</span> <span class="function">NodeDaemon</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.headers = {<span class="string">"X-Node-Key"</span>: NODE_KEY, <span class="string">"Content-Type"</span>: <span class="string">"application/json"</span>}
+        
+    <span class="keyword">def</span> <span class="function">sync_users</span>(self):
+        <span class="keyword">try</span>:
+            res = requests.get(f<span class="string">"{PANEL_URL}/users?node_id={NODE_ID}"</span>, headers=self.headers, timeout=5)
+            <span class="keyword">if</span> res.status_code == 200:
+                <span class="keyword">return</span> res.json().get(<span class="string">"users"</span>, [])
+        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+            print(f<span class="string">"Sync failed: {e}"</span>)
+        <span class="keyword">return</span> []
+
+    <span class="keyword">def</span> <span class="function">report_traffic</span>(self, traffic_data):
+        <span class="keyword">try</span>:
+            res = requests.post(f<span class="string">"{PANEL_URL}/traffic"</span>, headers=self.headers, json={<span class="string">"node_id"</span>: NODE_ID, <span class="string">"data"</span>: traffic_data}, timeout=5)
+            <span class="keyword">return</span> res.status_code == 200
+        <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+            print(f<span class="string">"Report failed: {e}"</span>)
+        <span class="keyword">return</span> <span class="keyword">False</span></code></pre>
+        </div>
+
+        <div class="footer">
+            项目文档托管于 GitHub: <a href="https://github.com/BOHAOYUAN/airport-subscription-system" target="_blank">BOHAOYUAN / airport-subscription-system</a>
+        </div>
+    </div>
+</body>
+</html>
